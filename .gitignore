@@ -1,0 +1,9 @@
+# 运行时/敏感内容不入库
+.venv/
+__pycache__/
+*.pyc
+.env
+inbox/
+knowledge/
+drop/
+*.log

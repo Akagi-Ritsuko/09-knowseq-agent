@@ -1,0 +1,16 @@
+# 核心依赖
+fastapi>=0.110
+uvicorn>=0.29
+watchdog>=4.0
+pystray>=0.19
+pillow>=10.0
+requests>=2.31
+readability-lxml>=0.8
+PyYAML>=6.0
+python-dotenv>=1.0
+
+# 可选依赖（缺失时对应采集源降级为 error/stopped，不影响整体）
+# screenpipe 服务：请单独安装官方 screenpipe（桌面应用或 CLI）。
+# 项目经其本地 HTTP API(localhost:3030) 拉取 OCR/音频 文本（见 app/capture/screenpipe_source.py）；
+# 官方 Python 客户端包（screenpipe-py）在部分镜像源不可用，故不在此强制安装。
+lark-oapi>=1.0        # REQ-106 飞书
