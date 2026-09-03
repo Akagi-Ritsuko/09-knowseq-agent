@@ -109,7 +109,7 @@
 | 项 | 内容 |
 |----|------|
 | 描述 | 素材列表（待提炼/已提炼状态、标记、预览）+ 采集控制页（各源启停、手动导入、网页抓取、飞书导入） |
-| 接口 | 后端补齐：`GET /api/materials` 扩展返回 `compiled` 状态（list_materials 读 frontmatter）、`POST /api/materials/mark`（`{path, compiled}` 回写 frontmatter）、`GET /api/materials/content?path=`（预览，防穿越校验同 knowledge）；前端用既有 `POST /api/start\|stop`、`POST /api/import`、`POST /api/import/file`、`POST /api/web/ingest`、`POST /api/feishu/doc` |
+| 接口 | 后端补齐：`GET /api/materials` 扩展返回 `compiled` 状态（list_materials 读 frontmatter）、`POST /api/materials/mark`（`{path, compiled}` 回写 frontmatter）、`GET /api/materials/content?path=`（预览，防穿越校验同 knowledge）；**新增 `POST /api/start\|stop/{name}` 单源启停**（manager.start_one/stop_one，未知源 404。实现裁决：验收「各源启停开关生效」需单源粒度，既有全局 start/stop 不满足，补最小增量）；前端用既有 `POST /api/settings`（开关持久化 `${name}_enabled`）、`POST /api/import`、`POST /api/import/file`、`POST /api/web/ingest`、`POST /api/feishu/doc` |
 | 适配点 | inbox.list_materials 扩展字段（读 frontmatter compiled/meta，保持既有字段不变）；素材页状态徽标（待提炼/已提炼）+ 标记切换 + 正文预览抽屉；采集控制页每源开关即时反映状态，meeting 源展示引擎就绪状态 |
 | 验收 | 素材列表显示待提炼/已提炼；标记后 frontmatter 回写成功且状态即时更新（待提炼素材可标记已提炼/反向撤销）；素材预览可读；各源启停开关生效；手动导入/网页抓取可用 |
 

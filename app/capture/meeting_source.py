@@ -185,6 +185,11 @@ class MeetingSource(CaptureSource):
             finally:
                 stop_event.wait(POLL_INTERVAL)
 
+    def info(self) -> dict:
+        """状态聚合：额外携带引擎就绪状态（REQ-408 meeting 源展示）。"""
+        ok, hint = self.engine_ready()
+        return {**super().info(), "engine_ready": ok, "engine_hint": hint}
+
     def start(self):
         if self.status == "running":
             return

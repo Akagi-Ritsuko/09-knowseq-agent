@@ -86,6 +86,27 @@ class Inbox:
                 self._save_dedup()
         return path
 
+    def _read_compiled(self, path: Path) -> bool:
+        """轻量读 frontmatter 顶格 compiled 行（REQ-408）。
+
+        逐行读到第二个 --- 即止，只认顶格键，避免整文件 YAML 解析开销，
+        也不会被 meta: 子键里的同名字段干扰。
+        """
+        try:
+            with open(path, encoding="utf-8") as f:
+                seen_head = False
+                for line in f:
+                    if line.strip() == "---":
+                        if seen_head:
+                            break
+                        seen_head = True
+                        continue
+                    if line.startswith("compiled:"):
+                        return line.split(":", 1)[1].strip().lower() == "true"
+        except OSError:
+            pass
+        return False
+
     def list_materials(self, source: Optional[str] = None) -> list:
         """列出素材摘要（按时间倒序）。"""
         out = []
@@ -100,5 +121,74 @@ class Inbox:
                     "source": s,
                     "name": p.name,
                     "size": p.stat().st_size,
+                    "compiled": self._read_compiled(p),
                 })
         return out
+
+    def _resolve_rel(self, rel_path: str) -> Optional[Path]:
+        """防穿越解析 inbox 相对路径：必须落在 inbox 子树内的 .md 文件。"""
+        rel = Path(rel_path or "")
+        if rel.is_absolute() or ".." in rel.parts:
+            return None
+        path = self.root / rel
+        try:
+            path.resolve().relative_to(self.root.resolve())
+        except ValueError:
+            return None
+        if path.suffix != ".md" or not path.is_file():
+            return None
+        return path
+
+    def read_material(self, rel_path: str) -> Optional[dict]:
+        """读取素材（frontmatter 摘要 + 正文），供控制台预览（REQ-408）。"""
+        path = self._resolve_rel(rel_path)
+        if path is None:
+            return None
+        text = path.read_text(encoding="utf-8")
+        lines = text.split("\n")
+        fm: dict = {}
+        body_start = 0
+        if lines and lines[0].strip() == "---":
+            for i in range(1, len(lines)):
+                if lines[i].strip() == "---":
+                    try:
+                        fm = yaml.safe_load("\n".join(lines[1:i])) or {}
+                    except yaml.YAMLError:
+                        fm = {}
+                    body_start = i + 1
+                    break
+        meta = fm.get("meta")
+        return {
+            "path": str(path.relative_to(self.root)),
+            "source": str(fm.get("source") or path.parent.name),
+            "captured_at": str(fm.get("captured_at") or ""),
+            "compiled": bool(fm.get("compiled", False)),
+            "meta": meta if isinstance(meta, dict) else {},
+            "body": "\n".join(lines[body_start:]).strip(),
+        }
+
+    def mark_compiled(self, rel_path: str, compiled: bool) -> bool:
+        """回写素材 frontmatter 的 compiled 标记（REQ-408）。返回是否成功。"""
+        path = self._resolve_rel(rel_path)
+        if path is None:
+            return False
+        with self._lock:
+            lines = path.read_text(encoding="utf-8").split("\n")
+            if not lines or lines[0].strip() != "---":
+                return False
+            head_end = None
+            for i in range(1, len(lines)):
+                if lines[i].strip() == "---":
+                    head_end = i
+                    break
+            if head_end is None:
+                return False
+            flag = "true" if compiled else "false"
+            for i in range(1, head_end):
+                if lines[i].startswith("compiled:"):
+                    lines[i] = f"compiled: {flag}"
+                    break
+            else:
+                lines.insert(head_end, f"compiled: {flag}")
+            path.write_text("\n".join(lines), encoding="utf-8")
+        return True

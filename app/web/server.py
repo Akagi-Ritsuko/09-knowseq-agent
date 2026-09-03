@@ -79,6 +79,11 @@ class BrainIndexReq(BaseModel):
     rebuild: bool = False
 
 
+class MaterialMarkReq(BaseModel):
+    path: str
+    compiled: bool
+
+
 class BrainQueryReq(BaseModel):
     query: str
     mode: str = "hybrid"
@@ -123,6 +128,22 @@ def create_app(config, inbox, manager, compile_mgr=None, brain_mgr=None) -> Fast
         manager.stop_all()
         return {"ok": True, "status": manager.get_status()}
 
+    @app.post("/api/start/{name}")
+    def start_one(name: str):
+        try:
+            manager.start_one(name)
+        except ValueError as e:
+            raise HTTPException(status_code=404, detail=str(e)) from e
+        return {"ok": True, "status": manager.get_status()}
+
+    @app.post("/api/stop/{name}")
+    def stop_one(name: str):
+        try:
+            manager.stop_one(name)
+        except ValueError as e:
+            raise HTTPException(status_code=404, detail=str(e)) from e
+        return {"ok": True, "status": manager.get_status()}
+
     # ---- 手动导入（REQ-109） ----
     @app.post("/api/import")
     def import_text(req: ImportTextReq):
@@ -165,10 +186,23 @@ def create_app(config, inbox, manager, compile_mgr=None, brain_mgr=None) -> Fast
             raise HTTPException(status_code=400, detail=err)
         return {"ok": True, "path": rel}
 
-    # ---- 素材 ----
+    # ---- 素材（REQ-408：列表状态 / 标记 / 预览） ----
     @app.get("/api/materials")
     def materials(source: str | None = None):
         return {"materials": inbox.list_materials(source)}
+
+    @app.post("/api/materials/mark")
+    def materials_mark(req: MaterialMarkReq):
+        if not inbox.mark_compiled(req.path, req.compiled):
+            raise HTTPException(status_code=404, detail=f"素材不存在：{req.path}")
+        return {"ok": True, "path": req.path, "compiled": req.compiled}
+
+    @app.get("/api/materials/content")
+    def materials_content(path: str):
+        mat = inbox.read_material(path)
+        if mat is None:
+            raise HTTPException(status_code=404, detail=f"素材不存在：{path}")
+        return mat
 
     # ---- 设置 ----
     @app.get("/api/settings")

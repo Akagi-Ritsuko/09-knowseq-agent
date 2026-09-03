@@ -39,6 +39,29 @@ class CaptureManager:
             except Exception:  # noqa: BLE001
                 pass
 
+    def _by_name_or_raise(self, name: str) -> CaptureSource:
+        s = self._by_name.get(name)
+        if s is None:
+            raise ValueError(f"未知采集源: {name!r}")
+        return s
+
+    def start_one(self, name: str):
+        """启动单个采集源（REQ-408 各源启停开关）。未知源抛 ValueError。"""
+        s = self._by_name_or_raise(name)
+        try:
+            s.start()
+        except Exception as e:  # noqa: BLE001
+            s.status = "error"
+            s.error = str(e)
+
+    def stop_one(self, name: str):
+        """停止单个采集源（REQ-408 各源启停开关）。未知源抛 ValueError。"""
+        s = self._by_name_or_raise(name)
+        try:
+            s.stop()
+        except Exception:  # noqa: BLE001
+            pass
+
     def get_status(self) -> dict:
         return {
             "running": any(s.status == "running" for s in self.sources),

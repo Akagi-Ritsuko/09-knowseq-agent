@@ -4,12 +4,42 @@ web:
 paths:
   inbox_dir: inbox
   drop_dir: drop
+  knowledge_dir: knowledge
+compile:
+  enabled: true
+  auto: true
+  poll_interval: 30
+  llm:
+    base_url: https://ark.cn-beijing.volces.com/api/coding/v3
+    model: deepseek-v4-flash
+    temperature: 0.7
+    max_context: 204800
+    streaming: true
+    request_timeout_min: 30
+    ingest_reasoning: false
+  output_language: zh
+  queue:
+    concurrency: 1
+    max_retries: 3
+  lint:
+    semantic: false
+  dedup:
+    threshold: 0.68
+brain:
+  enabled: true
+  embedding:
+    mode: local
+    base_url: https://ark.cn-beijing.volces.com/api/v3
+    model: ''
+    dim: 0
+    model_dir: models/embed/bge-small-zh-v1.5
+  llm:
+    base_url: ''
+    model: ''
 sources:
   meeting:
     enabled: true
-    # VibeASR.cpp 引擎可执行文件（MinGW-w64 构建产物，见 ADR-014）
     engine_path: tools/vibeasr/build/bin/asr_infer.exe
-    # VibeVoice-ASR-BitNet gguf 模型目录
     model_dir: models/vibeasr
   clipboard:
     enabled: true
@@ -22,23 +52,3 @@ sources:
     dirs: []
   web:
     enabled: true
-# M2 编译层（REQ-201）——LLM 配置；API Key 走 .env 的 LLM_API_KEY（不落日志）
-compile:
-  llm:
-    # 火山方舟 OpenAI 兼容端点
-    base_url: https://ark.cn-beijing.volces.com/api/coding/v3
-    # 模型：火山方舟控制台推理接入点 ID（ep- 开头）或模型名（如 dsv4flash）
-    model: "deepseek-v4-flash"
-# M3 大脑层（REQ-301）——LightRAG；embedding 支持本地模型（mode: local）或云端 OpenAI 兼容（mode: cloud）；Key 复用 LLM_API_KEY
-brain:
-  enabled: true
-  embedding:
-    mode: local # local（本地 SentenceTransformer 目录）| cloud（OpenAI 兼容 API）
-    # cloud 模式：OpenAI 兼容 embedding 端点与模型（如 doubao-embedding-large）
-    base_url: https://ark.cn-beijing.volces.com/api/v3
-    model: ""
-    dim: 0 # 0 = 启动时由模型/返回推断
-    model_dir: models/embed/bge-small-zh-v1.5 # mode=local 时的模型目录（ModelScope 已下载）
-  llm:
-    base_url: "" # 空 = 复用 compile.llm.base_url
-    model: "" # 空 = 复用 compile.llm.model
