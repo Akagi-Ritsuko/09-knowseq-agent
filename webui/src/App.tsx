@@ -6,6 +6,8 @@ import GraphPage from './pages/GraphPage';
 import KnowledgePage from './pages/KnowledgePage';
 import MaterialsPage from './pages/MaterialsPage';
 import SettingsPage from './pages/SettingsPage';
+import StatusRail from './status/StatusRail';
+import { StatusProvider } from './status/StatusContext';
 
 const NAV = [
   { to: '/ask', label: '问答' },
@@ -19,44 +21,49 @@ const NAV = [
 
 export default function App() {
   return (
-    <div className="app-shell">
-      <aside className="app-nav">
-        <div className="brand">
-          KnowSeq
-          <span className="brand-sub">local knowledge agent</span>
-        </div>
-        {NAV.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            className={({ isActive }) => (isActive ? 'active' : '')}
-          >
-            {item.label}
-          </NavLink>
-        ))}
-      </aside>
-      <main className="app-main">
-        <Routes>
-          <Route path="/" element={<Navigate to="/ask" replace />} />
-          <Route path="/ask" element={<AskPage />} />
-          <Route path="/graph" element={<GraphPage />} />
-          <Route path="/knowledge" element={<KnowledgePage />} />
-          <Route path="/compile" element={<CompilePage />} />
-          <Route path="/materials" element={<MaterialsPage />} />
-          <Route path="/capture" element={<CapturePage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route
-            path="*"
-            element={
-              <div className="page">
-                <div className="empty">
-                  <strong>404</strong>页面不存在
+    <StatusProvider>
+      <div className="app-shell">
+        <aside className="app-nav">
+          <div className="brand">
+            KnowSeq
+            <span className="brand-sub">local knowledge agent</span>
+          </div>
+          <nav>
+            {NAV.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) => (isActive ? 'active' : '')}
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+          <StatusRail />
+        </aside>
+        <main className="app-main">
+          <Routes>
+            <Route path="/" element={<Navigate to="/ask" replace />} />
+            <Route path="/ask" element={<AskPage />} />
+            <Route path="/graph" element={<GraphPage />} />
+            <Route path="/knowledge" element={<KnowledgePage />} />
+            <Route path="/compile" element={<CompilePage />} />
+            <Route path="/materials" element={<MaterialsPage />} />
+            <Route path="/capture" element={<CapturePage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route
+              path="*"
+              element={
+                <div className="page">
+                  <div className="empty">
+                    <strong>404</strong>页面不存在
+                  </div>
                 </div>
-              </div>
-            }
-          />
-        </Routes>
-      </main>
-    </div>
+              }
+            />
+          </Routes>
+        </main>
+      </div>
+    </StatusProvider>
   );
 }
