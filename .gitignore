@@ -6,4 +6,9 @@ __pycache__/
 inbox/
 knowledge/
 drop/
+.knowseq/
 *.log
+# 外部参考仓库（GPL v3，仅本地研究用，不随项目分发）
+reference/
+/models
+/tools
