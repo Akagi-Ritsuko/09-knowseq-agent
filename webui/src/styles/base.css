@@ -1,0 +1,40 @@
+/* T-401 骨架占位样式 —— T-402 设计系统产出 tokens 后整体取代 */
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  color: #1c1c1c;
+  background: #f7f7f5;
+}
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+.app-nav {
+  width: 200px;
+  border-right: 1px solid #e3e3df;
+  padding: 16px 12px;
+}
+.app-nav a {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 6px;
+  color: #444;
+  text-decoration: none;
+  margin-bottom: 2px;
+}
+.app-nav a.active {
+  background: #e8e8e4;
+  color: #111;
+  font-weight: 600;
+}
+.brand {
+  font-weight: 700;
+  margin: 4px 8px 16px;
+}
+.app-main {
+  flex: 1;
+  padding: 24px 28px;
+}

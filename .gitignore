@@ -8,6 +8,8 @@ knowledge/
 drop/
 .knowseq/
 *.log
+# 前端依赖（webui/；构建产物 app/web/dist 正常入库跟踪）
+node_modules/
 # 外部参考仓库（GPL v3，仅本地研究用，不随项目分发）
 reference/
 /models
