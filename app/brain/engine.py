@@ -19,6 +19,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import re
 import shutil
 import threading
 from functools import partial
@@ -373,10 +374,28 @@ class BrainEngine:
             if not isinstance(item, dict):
                 continue
             content = item.get("content") or ""
-            file_path = item.get("file_path") or item.get("source_id") or ""
+            file_path = (item.get("full_doc_id")
+                         or _rel_from_chunk_id(item.get("chunk_id"))
+                         or item.get("file_path")
+                         or item.get("source_id") or "")
             if not content:
                 continue
             hits.append({"content": content[:800], "file_path": str(file_path)})
             if len(hits) >= top_k:
                 break
         return hits
+
+
+_CHUNK_ID_TAIL = re.compile(r"-chunk-\d+$")
+
+
+def _rel_from_chunk_id(chunk_id: object) -> str:
+    """从 LightRAG chunk_id（``{rel}-chunk-NNN``）反解 knowledge 相对路径。
+
+    lightrag-hku 2.x 在入队时把 file_path 规范化为 basename
+    （utils_pipeline.normalize_document_file_path），而来源跳转需要完整
+    相对路径；索引时以 rel 作为 doc id，chunk_id 前缀即 rel。
+    """
+    if not chunk_id:
+        return ""
+    return _CHUNK_ID_TAIL.sub("", str(chunk_id))

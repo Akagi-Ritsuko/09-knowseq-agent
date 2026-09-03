@@ -151,6 +151,7 @@
     "react": "^19",
     "react-dom": "^19",
     "react-router-dom": "^7",
+    "marked": "^16",
     "sigma": "^3",
     "@react-sigma/core": "^4",
     "graphology": "^0.26",

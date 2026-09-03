@@ -404,6 +404,135 @@
   }
 }
 
+/* ============================================================
+ * 问答页（T-405：标签页 / 对话流 / 引用列表）
+ * ============================================================ */
+
+/* ---- 标签页 ---- */
+.tabs {
+  display: flex;
+  gap: var(--sp-1);
+  border-bottom: 1px solid var(--border-strong);
+  margin-bottom: var(--sp-4);
+}
+.tab {
+  padding: 8px 14px;
+  margin-bottom: -1px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-3);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease);
+}
+.tab:hover {
+  color: var(--text-2);
+}
+.tab.active {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+/* ---- 对话流 ---- */
+.chat-turns {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+.chat-turn {
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--border);
+}
+.chat-turns > .chat-turn:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+.chat-q {
+  margin-bottom: var(--sp-2);
+  padding-left: var(--sp-3);
+  border-left: 2px solid var(--accent);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+.chat-a {
+  font-size: 13.5px;
+}
+.chat-meta {
+  margin-top: var(--sp-2);
+  display: flex;
+  gap: var(--sp-2);
+}
+
+/* ---- 引用列表（问答引用 / 检索命中共用） ---- */
+.cite-list {
+  margin-top: var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.cite {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: baseline;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  background: var(--bg-elevated);
+  text-decoration: none;
+  transition: border-color var(--dur-fast) var(--ease);
+}
+.cite:hover {
+  border-color: var(--accent);
+}
+.cite-num {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+}
+.cite-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.cite-path {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text);
+  word-break: break-all;
+}
+.cite:hover .cite-path {
+  color: var(--accent);
+}
+.cite-snippet {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-3);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ---- 问答输入区 ---- */
+.ask-input-panel .textarea {
+  min-height: 64px;
+  margin-bottom: var(--sp-2);
+}
+.ask-mode,
+.ask-search-input {
+  width: auto;
+}
+.ask-search-input {
+  flex: 1;
+  min-width: 200px;
+}
+
 /* ---- mono 数据 ---- */
 .mono {
   font-family: var(--font-mono);
