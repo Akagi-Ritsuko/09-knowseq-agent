@@ -15,7 +15,7 @@ class FeishuSource(CaptureSource):
 
     def __init__(self, config, inbox):
         super().__init__(config, inbox)
-        self._client = None
+        self._seen_msg_ids: set = set()  # WS 断线重连可能重推，按 message_id 去重
 
     def _creds(self):
         return (self.config.secret("FEISHU_APP_ID"),
@@ -41,19 +41,33 @@ class FeishuSource(CaptureSource):
         self._spawn(self._work)
 
     # ---- 消息事件处理 ----
-    def _on_message(self, data):
+    def _on_message(self, data, stop_event) -> None:
+        if stop_event.is_set():
+            # SDK 的 WsClient 无 stop()，停止后到达的迟到消息直接丢弃
+            return
         try:
-            msg = data.message
-            chat_id = getattr(msg, "chat_id", "") or ""
+            event = getattr(data, "event", None)
+            msg = getattr(event, "message", None)
+            if msg is None:
+                return
             message_id = getattr(msg, "message_id", "") or ""
+            if message_id:
+                if message_id in self._seen_msg_ids:
+                    return
+                self._seen_msg_ids.add(message_id)
+                if len(self._seen_msg_ids) > 2000:  # 防无限增长（个人工具，量小）
+                    self._seen_msg_ids.clear()
+                    self._seen_msg_ids.add(message_id)
+            chat_id = getattr(msg, "chat_id", "") or ""
             raw = getattr(msg, "content", "") or ""
             try:
                 text = (json.loads(raw) or {}).get("text", "")
             except Exception:  # noqa: BLE001
                 text = raw
             sender = ""
-            if getattr(data, "sender", None) and data.sender.sender_id:
-                sender = data.sender.sender_id.open_id or ""
+            sender_id = getattr(getattr(event, "sender", None), "sender_id", None)
+            if sender_id is not None:
+                sender = getattr(sender_id, "open_id", "") or ""
             self.inbox.write_material(
                 "feishu", f"飞书消息 {chat_id[:8]}", text,
                 meta={"chat_id": chat_id, "message_id": message_id, "sender": sender},
@@ -61,39 +75,33 @@ class FeishuSource(CaptureSource):
         except Exception as e:  # noqa: BLE001
             self.error = str(e)
 
-    def _work(self):
+    def _work(self, stop_event) -> None:
+        from lark_oapi import EventDispatcherHandler
         from lark_oapi.ws import Client as WsClient
-        from lark_oapi.ws.handler import ClientEventHandler
 
         app_id, app_secret = self._creds()
 
-        class _Handler(ClientEventHandler):
-            def __init__(self, handler):
-                super().__init__()
-                self._handler = handler
-
-            def on_p2_im_message_receive_v1(self, data):
-                self._handler(data)
+        def _dispatch(data):
+            self._on_message(data, stop_event)
 
         try:
-            self._client = WsClient(
-                _Handler(self._on_message),
-                config={"app_id": app_id, "app_secret": app_secret})
+            # 自建应用 + WS 长连接：加解密/验签由 SDK 在连接层处理，builder 传空串
+            handler = (EventDispatcherHandler.builder("", "")
+                       .register_p2_im_message_receive_v1(_dispatch)
+                       .build())
+            client = WsClient(app_id=app_id, app_secret=app_secret, event_handler=handler)
             self.status = "running"
             self.error = ""
-            self._client.start()  # 长连接，阻塞运行
+            client.start()  # 长连接，阻塞运行；SDK 未提供 stop()
         except Exception as e:  # noqa: BLE001
-            self.status = "error"
-            self.error = str(e)
+            if not stop_event.is_set():
+                self.status = "error"
+                self.error = str(e)
 
     def stop(self):
-        if self._client:
-            try:
-                self._client.stop()
-            except Exception:  # noqa: BLE001
-                pass
-            self._client = None
-        self.status = "stopped"
+        # lark-oapi 1.x 的 WsClient 未提供 stop()：长连接随守护线程存活，
+        # 这里置位 stop_event 让 _on_message 丢弃后续消息。
+        super().stop()
 
     # ---- 云文档导入（REQ-106） ----
     def import_doc(self, doc_token: str) -> tuple:

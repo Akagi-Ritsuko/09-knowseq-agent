@@ -4,7 +4,7 @@
 
 ```
 ┌──────────────── 采集层（本地、无感、常驻）────────────────┐
-│ 屏幕+音频   screenpipe（本地 OCR + Whisper）             │
+│ 会议音频    VibeVoice-ASR-BitNet（本地 CPU 转写）         │
 │ 对话-微信/企微  剪贴板监控                               │
 │ 对话-飞书   飞书开放平台机器人事件（WebSocket 长连接）    │
 │              + 云文档导出导入                            │
@@ -32,7 +32,7 @@
 
 ### 2.1 采集层
 - **职责**：多类输入 → 统一 `inbox/`，只追加不修改（源不可变原则，源自 memory-compiler 的 `daily/` 理念）。
-- **屏幕/音频**：screenpipe（本地 OCR + Whisper，Windows 支持），存储本地 SQLite。
+- **会议音频**：VibeVoice-ASR-BitNet（微软开源 MIT，VibeASR.cpp 引擎本地 CPU 实时转写，模型约 1.6GB，子进程调用；详见 ADR-014，取代原 screenpipe 方案，屏幕 OCR 移出 M1）。
 - **对话-微信/企微**：剪贴板监控（无官方 API 的现实路径）。
 - **对话-飞书**：开放平台自建应用 + 机器人事件订阅（WebSocket 长连接，无需公网回调）+ 云文档导出导入。
 - **文件**：watchdog 监听目录 + 拖拽/批量导入。
@@ -41,7 +41,7 @@
 
 ### 2.2 编译层
 - **职责**：对 `inbox/` 新增素材，用云端 LLM 提炼为结构化知识条目，写入 `knowledge/`。
-- 复用 memory-compiler 编译思想：决策（Decision）/ 教训（Lesson）/ 概念（Concept）/ 连接（Connection）。
+- 复用 memory-compiler 编译思想：决策（Decision）/ 教训（Lesson）/ 概念（Concept）/ 连接（Connection）/ 疑问（Query）。
 - 幂等：以"已提炼标记"避免重复产出。
 
 ### 2.3 大脑层
@@ -56,7 +56,7 @@
 
 | 环节 | 输入 | 处理 | 输出/存储 |
 |---|---|---|---|
-| 采集 | 屏幕/音频/剪贴板/飞书事件/文件/URL/手动 | 提取文本（本地） | `inbox/`（原始素材，追加式） |
+| 采集 | 会议音频/剪贴板/飞书事件/文件/URL/手动 | 提取文本（本地） | `inbox/`（原始素材，追加式） |
 | 编译 | `inbox/` 新素材 | 云端 LLM 提炼 | `knowledge/`（结构化条目） |
 | 索引 | `knowledge/` | LightRAG 向量化 + 建图 | 向量库 + 图谱（LightRAG 存储） |
 | 查询 | 用户问题 | LightRAG 检索 + LLM 生成 | 答案 + 引用溯源 |
@@ -66,7 +66,7 @@
 | 组件 | 选型 | 备注 |
 |---|---|---|
 | 后端框架 | Python + FastAPI | 本地服务 + API |
-| 屏幕/音频采集 | screenpipe | 本地 OCR + Whisper，Windows 支持 |
+| 会议音频转写 | VibeVoice-ASR-BitNet（VibeASR.cpp） | 本地 CPU 实时转写，模型约 1.6GB，子进程调用 |
 | 文件监听 | watchdog | Python |
 | 剪贴板监控 | 自研（轮询/钩子） | 微信/企微对话入口 |
 | 飞书接入 | 飞书开放平台 SDK/API | WebSocket 长连接模式 |
@@ -85,7 +85,7 @@
   docs/                 # 文档（本仓库现阶段主体）
   app/
     main.py             # 入口：托盘 + FastAPI + 启动采集
-    capture/            # 采集层（screenpipe/剪贴板/飞书/文件/网页）
+    capture/            # 采集层（会议转写/剪贴板/飞书/文件/网页）
     compile/            # 编译层（LLM 提炼）
     brain/              # 大脑层（LightRAG 封装）
     web/                # 交互层（FastAPI 路由 + 前端静态资源）

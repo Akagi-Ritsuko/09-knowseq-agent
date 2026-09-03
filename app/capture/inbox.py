@@ -5,11 +5,14 @@
 """
 import hashlib
 import json
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-SOURCES = {"screen", "clipboard", "feishu", "file", "web", "manual"}
+import yaml
+
+SOURCES = {"meeting", "clipboard", "feishu", "file", "web", "manual"}
 
 
 def _safe_id(content: str) -> str:
@@ -21,6 +24,7 @@ class Inbox:
         self.root = Path(root)
         self.dedup_path = self.root / ".dedup.json"
         self._dedup: dict = self._load_dedup()  # content_hash -> 素材相对路径
+        self._lock = threading.Lock()  # 保护去重检查 + 写文件 + 索引更新的原子性
         for s in SOURCES:
             (self.root / s).mkdir(parents=True, exist_ok=True)
 
@@ -51,29 +55,35 @@ class Inbox:
         if not content:
             return None
         content_hash = self._content_hash(content)
-        if dedup and content_hash in self._dedup:
-            return None
+        with self._lock:
+            if dedup and content_hash in self._dedup:
+                return None
 
-        now = datetime.now()
-        filename = f"{source}_{now.strftime('%Y%m%d_%H%M%S')}_{_safe_id(content)}.md"
-        path = self.root / source / filename
-        meta = meta or {}
-        lines = [
-            "---",
-            f"id: {_safe_id(content)}",
-            f"source: {source}",
-            f"captured_at: {now.strftime('%Y-%m-%dT%H:%M:%S')}",
-        ]
-        if meta:
-            lines.append("meta:")
-            for k, v in meta.items():
-                lines.append(f"  {k}: {v}")
-        lines += ["compiled: false", "---", "", f"# {title or source}", "", content]
-        path.write_text("\n".join(lines), encoding="utf-8")
+            now = datetime.now()
+            filename = f"{source}_{now.strftime('%Y%m%d_%H%M%S')}_{_safe_id(content)}.md"
+            path = self.root / source / filename
+            meta = meta or {}
+            lines = [
+                "---",
+                f"id: {_safe_id(content)}",
+                f"source: {source}",
+                f"captured_at: {now.strftime('%Y-%m-%dT%H:%M:%S')}",
+            ]
+            if meta:
+                # meta 内容来自外部（网页标题/窗口名/文件名等），必须走 YAML 转义，
+                # 否则含冒号、换行、特殊符号的值会破坏 frontmatter 结构
+                dumped = yaml.safe_dump(
+                    {str(k): v for k, v in meta.items()},
+                    allow_unicode=True, default_flow_style=False,
+                    sort_keys=False, width=10**9)
+                lines.append("meta:")
+                lines.extend("  " + ln for ln in dumped.rstrip("\n").splitlines())
+            lines += ["compiled: false", "---", "", f"# {title or source}", "", content]
+            path.write_text("\n".join(lines), encoding="utf-8")
 
-        if dedup:
-            self._dedup[content_hash] = str(path)
-            self._save_dedup()
+            if dedup:
+                self._dedup[content_hash] = str(path)
+                self._save_dedup()
         return path
 
     def list_materials(self, source: Optional[str] = None) -> list:

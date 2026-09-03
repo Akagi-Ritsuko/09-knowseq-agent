@@ -26,12 +26,15 @@ class WebSource(CaptureSource):
 
     def ingest(self, url: str) -> tuple:
         """抓取并入库。返回 (素材相对路径或 None, 错误信息或 None)。"""
-        url = (url or "").strip()
+        url = (url or "").strip().strip("`")  # 容忍从 markdown 复制带来的反引号
         if not url.startswith(("http://", "https://")):
             return None, "URL 需以 http:// 或 https:// 开头"
         try:
             resp = requests.get(url, timeout=20, headers={"User-Agent": UA})
             resp.raise_for_status()
+            # 响应头未声明 charset 时 requests 默认按 ISO-8859-1 解码，中文页面会乱码
+            if (resp.encoding or "").lower().replace("_", "-") in ("iso-8859-1", "latin-1"):
+                resp.encoding = resp.apparent_encoding
         except requests.RequestException as e:  # noqa: BLE001
             return None, f"抓取失败: {e}"
 
@@ -47,6 +50,9 @@ class WebSource(CaptureSource):
             return None, f"正文抽取失败: {e}"
 
         if not text:
+            if re.search(r"<script[^>]*>", resp.text, re.I):
+                return None, ("页面疑似 JS 动态渲染（SPA）或需登录，纯 HTTP 抓取无正文；"
+                              "建议打开页面复制正文后用「手动导入」入库")
             return None, "未抽取到正文"
         path = self.inbox.write_material(
             "web", title, text, meta={"url": url, "title": title}, dedup=True)

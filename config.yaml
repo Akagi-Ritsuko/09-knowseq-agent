@@ -1,22 +1,44 @@
-# KnowSeq Agent 配置文件（非敏感项；敏感项放 .env，见 .env.example）
 web:
-  port: 8765          # 极简控制台端口（仅本机监听）
-
+  port: 8765
+  auto_start: true
 paths:
-  inbox_dir: "inbox"  # 原始素材根目录（相对项目根，只追加不修改）
-  drop_dir: "drop"    # 文件热文件夹：拖入的文件会被自动采集（相对项目根）
-
+  inbox_dir: inbox
+  drop_dir: drop
 sources:
-  screen:             # REQ-104 screenpipe（屏幕+音频，官方 Python 包）
-    enabled: false
-  clipboard:          # REQ-105 剪贴板监控（微信/企微对话）
+  meeting:
     enabled: true
-    interval: 2       # 轮询间隔（秒）
-    max_len: 50000    # 单条文本截断上限（字符）
-  feishu:             # REQ-106 飞书（需在 .env 配置凭据）
-    enabled: false
-  file:               # REQ-107 文件监听
+    # VibeASR.cpp 引擎可执行文件（MinGW-w64 构建产物，见 ADR-014）
+    engine_path: tools/vibeasr/build/bin/asr_infer.exe
+    # VibeVoice-ASR-BitNet gguf 模型目录
+    model_dir: models/vibeasr
+  clipboard:
     enabled: true
-    dirs: []          # 额外监听目录（绝对路径，可空）
-  web:                # REQ-108 网页抓取（控制台输入 URL 触发）
+    interval: 2
+    max_len: 50000
+  feishu:
     enabled: true
+  file:
+    enabled: true
+    dirs: []
+  web:
+    enabled: true
+# M2 编译层（REQ-201）——LLM 配置；API Key 走 .env 的 LLM_API_KEY（不落日志）
+compile:
+  llm:
+    # 火山方舟 OpenAI 兼容端点
+    base_url: https://ark.cn-beijing.volces.com/api/coding/v3
+    # 模型：火山方舟控制台推理接入点 ID（ep- 开头）或模型名（如 dsv4flash）
+    model: "deepseek-v4-flash"
+# M3 大脑层（REQ-301）——LightRAG；embedding 支持本地模型（mode: local）或云端 OpenAI 兼容（mode: cloud）；Key 复用 LLM_API_KEY
+brain:
+  enabled: true
+  embedding:
+    mode: local # local（本地 SentenceTransformer 目录）| cloud（OpenAI 兼容 API）
+    # cloud 模式：OpenAI 兼容 embedding 端点与模型（如 doubao-embedding-large）
+    base_url: https://ark.cn-beijing.volces.com/api/v3
+    model: ""
+    dim: 0 # 0 = 启动时由模型/返回推断
+    model_dir: models/embed/bge-small-zh-v1.5 # mode=local 时的模型目录（ModelScope 已下载）
+  llm:
+    base_url: "" # 空 = 复用 compile.llm.base_url
+    model: "" # 空 = 复用 compile.llm.model

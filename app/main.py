@@ -7,8 +7,10 @@ import threading
 
 import uvicorn
 
+from .brain import BrainEngine
 from .capture.inbox import Inbox
 from .capture.manager import CaptureManager
+from .compile import CompileManager
 from .config import Config
 from .tray import build_tray
 from .web.server import create_app
@@ -18,7 +20,11 @@ def main():
     config = Config()
     inbox = Inbox(config.inbox_dir)
     manager = CaptureManager(config, inbox)
-    app = create_app(config, inbox, manager)
+    compile_mgr = CompileManager(config, inbox)
+    brain_mgr = BrainEngine(config)
+    if config.get("brain.enabled", False):
+        brain_mgr.start()  # embedding 未配置时进入 ready=False 并记录错误，不抛
+    app = create_app(config, inbox, manager, compile_mgr, brain_mgr)
     port = int(config.get("web.port", 8765))
     url = f"http://127.0.0.1:{port}"
 
@@ -28,6 +34,8 @@ def main():
         daemon=True,
     ).start()
     print(f"[knowseq-agent] 控制台: {url}")
+
+    compile_mgr.start()  # compile.enabled 内部门禁；后台轮询 inbox 自动编译
 
     if config.get("web.auto_start", True):
         manager.start_all()

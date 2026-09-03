@@ -1,10 +1,13 @@
 ---
 title: "ADR-003: 屏幕/音频采集用 screenpipe"
-status: accepted
+status: superseded（已被 ADR-014 取代）
 date: 2026-09-02
+superseded-by: ADR-014
 ---
 
 # ADR-003 屏幕/音频采集
+
+> **状态说明（2026-09-02）**：本决策已被 [ADR-014](ADR-014-vibevoice-asr.md) 取代 —— 会议音频采集改用 VibeVoice-ASR 本地离线转写；屏幕画面 OCR 采集移出 M1 范围。以下保留原文留痕。
 
 ## 背景
 

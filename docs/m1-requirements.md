@@ -5,29 +5,29 @@
 
 ## §0 范围与目标
 
-**目标**：五类输入（屏幕/音频、对话-微信企微/飞书、文件、网页、手动）全部打通，统一写入 `inbox/`；极简控制台可用；托盘开关雏形可用。
+**目标**：五类输入（会议音频、对话-微信企微/飞书、文件、网页、手动）全部打通，统一写入 `inbox/`；极简控制台可用；托盘开关雏形可用。
 
 **不在 M1 范围**：编译层（M2）、大脑层 LightRAG（M3）、完整 Web 控制台与问答/图谱（M4）、右键菜单/快捷键/自启（M5）。
 
-**前置决策**：① 极简控制台（FastAPI 先行，ADR-012）；② 飞书真实端到端联调（凭据就绪后）；③ screenpipe 用官方 Python 包（ADR-003）。
+**前置决策**：① 极简控制台（FastAPI 先行，ADR-012）；② 飞书真实端到端联调（凭据就绪后）；③ 会议音频用 VibeVoice-ASR-BitNet 本地离线转写（ADR-014，取代 ADR-003 的 screenpipe 方案；屏幕画面 OCR 移出 M1 范围）。
 
 ## §1 工程与配置基础（REQ-101）
 
 | 项 | 内容 |
 |---|---|
 | 描述 | 建立可运行的 Python 工程骨架与配置体系 |
-| Python | 本机默认 `python`=2.7 过旧，**统一用 `py -3`**（Python 3.10.11）建虚拟环境：`py -3 -m venv .venv` |
-| 依赖 | fastapi、uvicorn、watchdog、pystray、pillow、requests、readability-lxml、screenpipe-py、lark-oapi、pyyaml、python-dotenv |
+| Python | 本机默认 `python`=2.7 过旧，**统一用 `py -3`** 建虚拟环境：`py -3 -m venv .venv`（2026-09-02 实测本机 `py -3` 为 Python 3.14，依赖已全部兼容安装） |
+| 依赖 | fastapi、uvicorn、watchdog、pystray、pillow、requests、readability-lxml、lark-oapi、pyyaml、python-dotenv；可选组件（REQ-104 用）：VibeASR.cpp 引擎 + gguf 模型（VibeVoice-ASR-BitNet，本地构建 + 子进程调用；Windows 需 MinGW-w64，MSVC 不支持），不进主依赖 |
 | 配置 | `config.yaml`（非敏感：目录、开关、监听目录、来源启用项）；`.env`（敏感：飞书 App ID/Secret、后续 LLM Key） |
 | 目录 | `app/{main.py, config.py, capture/, web/, tray.py}` + 运行期 `inbox/` |
 | 验收 | `py -3 -m venv .venv` 后能安装依赖并 `import` 各模块；`config.py` 能加载 `config.yaml` + `.env` 并持久化修改 |
 
 ## §2 inbox 素材模型（REQ-102，对应 ADR-013）
 
-- 目录：`inbox/<source>/`，source ∈ {screen, clipboard, feishu, file, web, manual}。
+- 目录：`inbox/<source>/`，source ∈ {meeting, clipboard, feishu, file, web, manual}。
 - 素材文件：单个 `.md`，文件名 `<source>_<yyyyMMdd_HHmmss>_<短id>.md`。
 - frontmatter：`id`、`source`、`captured_at`（ISO）、`meta`（来源标识：URL/会话/文件名/等）、`compiled: false`（供 M2 消费）。
-- 去重：clipboard/web/manual 用内容哈希（去重指纹存 `inbox/.dedup.json`）；screen/feishu/file 按事件/文件天然去重。
+- 去重：clipboard/web/manual 用内容哈希（去重指纹存 `inbox/.dedup.json`）；meeting/feishu/file 按事件/文件天然去重。
 - 接口：`app/capture/inbox.py` 提供统一 `write_material(source, title, content, meta)`，所有采集源调用。
 - 验收：各源调用 `write_material` 后生成规范文件；重复内容不重复落盘；Obsidian 可直接打开。
 
@@ -40,11 +40,13 @@
 
 ## §4~§9 各采集源
 
-### REQ-104 screenpipe（FR-001）
-- 输入：屏幕内容与系统音频。处理：screenpipe-py 启动/停止本地采集（OCR + Whisper）。
-- 输出：增量拉取新内容 → `write_material(source=screen)`。
-- 异常：screenpipe 未安装/运行失败 → 状态 error，不影响其他源。
-- 验收：能启动采集并在 `inbox/screen/` 产生素材；停止后不再产生。
+### REQ-104 会议音频转写（FR-001，ADR-014）
+- 输入：会议/通话录音等音频文件（wav 等；拖入热文件夹或手动导入触发）。
+- 处理：子进程调用 VibeASR.cpp 的 `asr_infer`（VibeVoice-ASR-BitNet，本地 CPU 推理，4 线程 RTF<1），转写结果组装为 Markdown；说话人/时间戳字段以引擎实际输出为准（1.5B 解码器，待实测）。
+- 输出：`write_material(source=meeting)`，meta 记音频文件名/时长/引擎与模型名。
+- 约束：模型约 1.58GB；Windows 构建需 MinGW-w64；中文会议 WER 偏高（AliMeeting 40.58），质量以实测为准；MIT，官方声明仅供研发用途。
+- 异常：引擎未构建/模型未下载 → 状态 error 并提示，不影响其他源；转写失败不落空文件。
+- 验收：拖入一段会议录音后 `inbox/meeting/` 产出转写素材；引擎未就绪时不拖垮其他源。
 
 ### REQ-105 剪贴板监控（FR-002）
 - 输入：剪贴板文本。处理：Windows 剪贴板轮询（周期可配），去重（REQ-102），非文本忽略，超长截断（上限可配，默认 50k 字符）。
@@ -97,7 +99,9 @@
 | 键 | 位置 | 说明 |
 |---|---|---|
 | `web.port` | config.yaml | 控制台端口，默认 8765 |
-| `sources.screen.enabled` | config.yaml | screenpipe 开关 |
+| `sources.meeting.enabled` | config.yaml | 会议音频转写开关 |
+| `sources.meeting.engine_path` | config.yaml | VibeASR.cpp `asr_infer` 可执行文件路径 |
+| `sources.meeting.model_dir` | config.yaml | gguf 模型目录（VibeVoice-ASR-BitNet） |
 | `sources.clipboard.enabled` | config.yaml | 剪贴板监控开关 |
 | `sources.clipboard.interval` | config.yaml | 轮询间隔（秒） |
 | `sources.clipboard.max_len` | config.yaml | 文本截断上限 |
@@ -126,7 +130,7 @@
 | T-101 | REQ-101 | — | T-002~008 前置 |
 | T-102 | REQ-102 | ADR-013 | T-002~008 前置 |
 | T-103 | REQ-103 | — | T-002~008 前置 |
-| T-104 | REQ-104 | ADR-003 | T-002 |
+| T-104 | REQ-104 | ADR-014 | T-002 |
 | T-105 | REQ-105 | ADR-004 | T-003 |
 | T-106 | REQ-106 | ADR-005 | T-004 |
 | T-107 | REQ-107 | ADR-006 | T-005 |

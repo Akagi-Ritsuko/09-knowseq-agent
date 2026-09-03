@@ -6,14 +6,14 @@ from .base import CaptureSource
 from .clipboard_source import ClipboardSource
 from .feishu_source import FeishuSource
 from .file_source import FileSource
-from .screenpipe_source import ScreenpipeSource
+from .meeting_source import MeetingSource
 from .web_source import WebSource
 
 
 class CaptureManager:
     def __init__(self, config, inbox):
         self.sources: list[CaptureSource] = [
-            ScreenpipeSource(config, inbox),
+            MeetingSource(config, inbox),
             ClipboardSource(config, inbox),
             FeishuSource(config, inbox),
             FileSource(config, inbox),

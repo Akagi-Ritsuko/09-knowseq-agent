@@ -18,7 +18,7 @@
 
 ## 当前状态速览
 
-- **里程碑**：M0（文档与项目骨架）已完成 → 下一步 M1（采集层），见 [milestones.md](docs/milestones.md)
+- **里程碑**：M1（采集层）进行中——代码已实现，待真实环境验收项见 [tasks.md](docs/tasks.md) doing 说明；阶段规划见 [milestones.md](docs/milestones.md)
 - **近期变更**：见 [changelog.md](docs/changelog.md)
 - **待办入口**：见 [tasks.md](docs/tasks.md)
 

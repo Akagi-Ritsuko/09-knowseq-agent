@@ -1,8 +1,9 @@
 """配置加载与持久化（T-101 REQ-101 / NFR-002）。
 
-- 非敏感项：config.yaml（web.port / paths / sources.*）
+- 非敏感项：config.yaml（web.port / paths / sources.* / compile.*）
 - 敏感项：.env（飞书凭据、LLM Key），由 set_env 写回，不入 config.yaml、不入日志。
 """
+import copy
 import os
 from pathlib import Path
 from typing import Any
@@ -14,9 +15,42 @@ ROOT = Path(__file__).resolve().parent.parent
 
 DEFAULTS: dict = {
     "web": {"port": 8765, "auto_start": True},
-    "paths": {"inbox_dir": "inbox", "drop_dir": "drop"},
+    "paths": {"inbox_dir": "inbox", "drop_dir": "drop", "knowledge_dir": "knowledge"},
+    "compile": {
+        "enabled": True,
+        "auto": True,
+        "poll_interval": 30,
+        "llm": {
+            "base_url": "",
+            "model": "",
+            "temperature": 0.7,
+            "max_context": 204800,
+            "streaming": True,
+            "request_timeout_min": 30,
+            "ingest_reasoning": False,
+        },
+        "output_language": "zh",
+        "queue": {"concurrency": 1, "max_retries": 3},
+        "lint": {"semantic": False},
+        "dedup": {"threshold": 0.68},
+    },
+    "brain": {
+        "enabled": False,
+        "embedding": {
+            "mode": "cloud",        # cloud（OpenAI 兼容 API）| local（本地模型目录）
+            "base_url": "",
+            "model": "",
+            "dim": 0,               # 0 = 启动时推断
+            "model_dir": "",        # mode=local 时的 SentenceTransformer 本地目录
+        },
+        "llm": {"base_url": "", "model": ""},
+    },
     "sources": {
-        "screen": {"enabled": False},
+        "meeting": {
+            "enabled": False,
+            "engine_path": "tools/vibeasr/build/bin/asr_infer.exe",
+            "model_dir": "models/vibeasr",
+        },
         "clipboard": {"enabled": True, "interval": 2, "max_len": 50000},
         "feishu": {"enabled": False},
         "file": {"enabled": True, "dirs": []},
@@ -39,7 +73,8 @@ class Config:
     def __init__(self, config_path: Path | None = None, env_path: Path | None = None):
         self.config_path = config_path or (ROOT / "config.yaml")
         self.env_path = env_path or (ROOT / ".env")
-        self.data: dict = _deep_merge(_deep_merge({}, DEFAULTS), self._load_yaml())
+        # 深拷贝 DEFAULTS：避免 _deep_merge 写穿模块级默认配置，污染其他 Config 实例
+        self.data: dict = _deep_merge(copy.deepcopy(DEFAULTS), self._load_yaml())
         load_dotenv(self.env_path)
 
     def _load_yaml(self) -> dict:
@@ -102,3 +137,7 @@ class Config:
     @property
     def drop_dir(self) -> Path:
         return self._path("paths.drop_dir", "drop")
+
+    @property
+    def knowledge_dir(self) -> Path:
+        return self._path("paths.knowledge_dir", "knowledge")

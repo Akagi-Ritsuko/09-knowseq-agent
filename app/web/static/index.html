@@ -89,6 +89,69 @@
   </div>
 
   <div class="card">
+    <h2>编译状态（REQ-213）</h2>
+    <div id="compileState" class="row"></div>
+    <div id="compileQueueInfo" class="msg"></div>
+    <div id="compilePending" class="msg"></div>
+  </div>
+
+  <div class="card">
+    <h2>编译触发</h2>
+    <div class="row">
+      <button id="btnCompileAll">编译全部未编译素材</button>
+      <label style="display:flex;align-items:center;gap:6px;margin:0">
+        <input type="text" id="compilePath" placeholder="inbox 相对路径（如 manual/xx.md）" style="width:280px">
+        <button class="secondary" id="btnCompilePath">单条入队</button>
+      </label>
+    </div>
+    <div id="compileMsg" class="msg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Review 待处理（REQ-210）</h2>
+    <table>
+      <thead><tr><th>类型</th><th>标题</th><th>说明</th><th>来源</th><th>操作</th></tr></thead>
+      <tbody id="reviewsBody"><tr><td colspan="5">加载中…</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>知识库浏览</h2>
+    <div id="kbList" class="msg"></div>
+    <pre id="kbContent" style="display:none;background:#f8fafc;border:1px solid #e3e8ee;border-radius:8px;padding:10px;font-size:12px;white-space:pre-wrap;max-height:320px;overflow:auto"></pre>
+  </div>
+
+  <div class="card">
+    <h2>手动工具</h2>
+    <div class="row">
+      <button class="secondary" id="btnLint">Lint 检查</button>
+      <button class="secondary" id="btnDedup">Dedup 合并</button>
+      <button class="secondary" id="btnEnrichDry">Enrich 预览（dry）</button>
+      <button class="secondary" id="btnEnrich">Enrich 写入</button>
+    </div>
+    <div id="toolMsg" class="msg"></div>
+    <pre id="toolPre" style="display:none;background:#f8fafc;border:1px solid #e3e8ee;border-radius:8px;padding:10px;font-size:12px;white-space:pre-wrap;max-height:240px;overflow:auto"></pre>
+  </div>
+
+  <div class="card">
+    <h2>大脑（M3 · LightRAG）</h2>
+    <div id="brainState" class="row"></div>
+    <div id="brainInfo" class="msg"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="secondary" id="btnBrainIndex">重建索引</button>
+      <button class="secondary" id="btnBrainIndexInc">增量索引</button>
+    </div>
+    <input type="text" id="brainQuery" placeholder="向知识库提问…" style="margin-top:10px">
+    <div class="row" style="margin-top:10px">
+      <button class="secondary" id="btnBrainAsk">问答（hybrid）</button>
+      <button class="secondary" id="btnBrainSearch">语义检索</button>
+      <button class="secondary" id="btnBrainGraph">图谱 JSON</button>
+    </div>
+    <div id="brainMsg" class="msg"></div>
+    <pre id="brainPre" style="display:none;background:#f8fafc;border:1px solid #e3e8ee;border-radius:8px;padding:10px;font-size:12px;white-space:pre-wrap;max-height:280px;overflow:auto"></pre>
+  </div>
+
+  <div class="card">
     <h2>设置</h2>
     <div class="grid2">
       <div>
@@ -100,7 +163,7 @@
       </div>
       <div>
         <label>采集源开关</label>
-        <div class="switch"><input type="checkbox" id="setScreen"><label for="setScreen">屏幕/音频 (screenpipe)</label></div>
+        <div class="switch"><input type="checkbox" id="setMeeting"><label for="setMeeting">会议音频 (VibeVoice-ASR)</label></div>
         <div class="switch"><input type="checkbox" id="setClipboard"><label for="setClipboard">剪贴板 (微信/企微)</label></div>
         <div class="switch"><input type="checkbox" id="setFeishu"><label for="setFeishu">飞书</label></div>
         <div class="switch"><input type="checkbox" id="setFile"><label for="setFile">文件监听</label></div>
@@ -112,6 +175,13 @@
       <input type="text" id="setFeishuId" placeholder="FEISHU_APP_ID">
       <input type="password" id="setFeishuSecret" placeholder="FEISHU_APP_SECRET">
     </div>
+    <label>编译 LLM 配置（非敏感写 config.yaml；API Key 在 .env 手工填）</label>
+    <div class="grid2">
+      <input type="text" id="setLlBase" placeholder="base_url，如 https://ark.cn-beijing.volces.com/api/v3">
+      <input type="text" id="setLlModel" placeholder="model，如 deepseek-v4-flash">
+    </div>
+    <div class="switch"><input type="checkbox" id="setCompile"><label for="setCompile">启用编译</label></div>
+    <div class="switch"><input type="checkbox" id="setCompileAuto"><label for="setCompileAuto">自动轮询 inbox</label></div>
     <div class="row" style="margin-top:12px">
       <button id="btnSaveSettings">保存设置</button>
       <div id="settingsMsg" class="msg"></div>

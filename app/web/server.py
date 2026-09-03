@@ -1,17 +1,41 @@
-"""极简本地控制台（T-110 REQ-110 / ADR-012）。
+"""极简本地控制台（T-110 REQ-110 / ADR-012）+ 编译集成（T-213 REQ-213）。
 
 FastAPI 本地服务，仅本机监听。提供：采集状态/开关、手动导入（文本/文件）、
-网页抓取触发、素材列表、设置（各源开关/监听目录/飞书凭据）。
+网页抓取触发、素材列表、设置（各源开关/监听目录/飞书凭据）、M2 编译
+API（状态/触发/review/knowledge 浏览/lint/dedup/enrich）。
 完整交互层（问答/图谱/知识管理）属 M4（ADR-010）。
 """
+import ipaddress
 from pathlib import Path
+from urllib.parse import urlsplit
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from ..compile.schema import CATEGORIES
+
 STATIC_DIR = Path(__file__).resolve().parent / "static"
+
+
+def _host_part(value: str) -> str:
+    """从 Host/Origin 里取主机名（兼容 localhost:8765、[::1]:8765）。"""
+    value = (value or "").strip()
+    if value.startswith("["):
+        return value[1:value.find("]")].lower()
+    return value.rsplit(":", 1)[0].lower() if ":" in value else value.lower()
+
+
+def _is_local(host: str) -> bool:
+    if not host:
+        return False
+    if host in ("localhost", "127.0.0.1", "::1"):
+        return True
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return False
 
 
 class ImportTextReq(BaseModel):
@@ -26,7 +50,7 @@ class WebIngestReq(BaseModel):
 class SettingsReq(BaseModel):
     web_port: int | None = None
     auto_start: bool | None = None
-    screen_enabled: bool | None = None
+    meeting_enabled: bool | None = None
     clipboard_enabled: bool | None = None
     feishu_enabled: bool | None = None
     file_enabled: bool | None = None
@@ -34,10 +58,51 @@ class SettingsReq(BaseModel):
     file_dirs: list[str] | None = None
     feishu_app_id: str | None = None
     feishu_app_secret: str | None = None
+    compile_enabled: bool | None = None
+    compile_auto: bool | None = None
+    llm_base_url: str | None = None
+    llm_model: str | None = None
 
 
-def create_app(config, inbox, manager) -> FastAPI:
+class CompileTriggerReq(BaseModel):
+    scope: str = "all"          # all | path
+    path: str | None = None     # scope=path 时的 inbox 相对路径
+
+
+class ReviewResolveReq(BaseModel):
+    id: str
+    note: str | None = None
+
+
+class BrainIndexReq(BaseModel):
+    rebuild: bool = False
+
+
+class BrainQueryReq(BaseModel):
+    query: str
+    mode: str = "hybrid"
+    top_k: int = 10
+
+
+def create_app(config, inbox, manager, compile_mgr=None, brain_mgr=None) -> FastAPI:
     app = FastAPI(title="KnowSeq Agent", version="0.1.0")
+
+    # ---- 本机访问限制（REQ-110）----
+    # 只校验 Host 不够：跨站表单/multipart 的 Host 也是本机，
+    # 所以带 Origin 且 Origin 不是本机的请求（simple request）一并拒绝。
+    @app.middleware("http")
+    async def local_only(request: Request, call_next):
+        if not _is_local(_host_part(request.headers.get("host", ""))):
+            return JSONResponse({"detail": "仅允许本机访问"}, status_code=403)
+        origin = request.headers.get("origin")
+        if origin:
+            try:
+                origin_host = urlsplit(origin).hostname or ""
+            except ValueError:
+                origin_host = ""
+            if not _is_local(origin_host):
+                return JSONResponse({"detail": "拒绝跨站请求"}, status_code=403)
+        return await call_next(request)
 
     # ---- 状态与开关 ----
     @app.get("/api/status")
@@ -111,7 +176,7 @@ def create_app(config, inbox, manager) -> FastAPI:
             "web_port": config.get("web.port", 8765),
             "auto_start": config.get("web.auto_start", True),
             "sources": {
-                "screen": config.get("sources.screen.enabled", False),
+                "meeting": config.get("sources.meeting.enabled", False),
                 "clipboard": config.get("sources.clipboard.enabled", True),
                 "feishu": config.get("sources.feishu.enabled", False),
                 "file": config.get("sources.file.enabled", True),
@@ -120,6 +185,13 @@ def create_app(config, inbox, manager) -> FastAPI:
             "file_dirs": config.get("sources.file.dirs") or [],
             "drop_dir": str(config.drop_dir),
             "feishu_configured": bool(config.secret("FEISHU_APP_ID")),
+            "compile": {
+                "enabled": config.get("compile.enabled", True),
+                "auto": config.get("compile.auto", True),
+                "llm_base_url": config.get("compile.llm.base_url", ""),
+                "llm_model": config.get("compile.llm.model", ""),
+                "llm_key_configured": bool(config.secret("LLM_API_KEY")),
+            },
         }
 
     @app.post("/api/settings")
@@ -129,7 +201,7 @@ def create_app(config, inbox, manager) -> FastAPI:
         if req.auto_start is not None:
             config.set("web.auto_start", bool(req.auto_start))
         for key, val in {
-            "screen": req.screen_enabled,
+            "meeting": req.meeting_enabled,
             "clipboard": req.clipboard_enabled,
             "feishu": req.feishu_enabled,
             "file": req.file_enabled,
@@ -143,8 +215,125 @@ def create_app(config, inbox, manager) -> FastAPI:
             config.set_env("FEISHU_APP_ID", req.feishu_app_id.strip())
         if req.feishu_app_secret:
             config.set_env("FEISHU_APP_SECRET", req.feishu_app_secret.strip())
+        if req.compile_enabled is not None:
+            config.set("compile.enabled", bool(req.compile_enabled))
+        if req.compile_auto is not None:
+            config.set("compile.auto", bool(req.compile_auto))
+        if req.llm_base_url is not None:
+            config.set("compile.llm.base_url", req.llm_base_url.strip())
+        if req.llm_model is not None:
+            config.set("compile.llm.model", req.llm_model.strip())
         config.save()
         return {"ok": True, "settings": settings()}
+
+    # ---- 编译（REQ-213）----
+    def _require_compile():
+        if compile_mgr is None:
+            raise HTTPException(status_code=404, detail="编译服务未启用")
+
+    @app.get("/api/compile/status")
+    def compile_status():
+        _require_compile()
+        return compile_mgr.status()
+
+    @app.post("/api/compile/trigger")
+    def compile_trigger(req: CompileTriggerReq):
+        _require_compile()
+        if req.scope == "path":
+            return {"ok": True, "scope": "path",
+                    "triggered": compile_mgr.trigger_path(req.path or "")}
+        return {"ok": True, "scope": "all", "triggered": compile_mgr.trigger_all()}
+
+    @app.get("/api/compile/reviews")
+    def compile_reviews():
+        _require_compile()
+        return {"reviews": compile_mgr.reviews.list("open")}
+
+    @app.post("/api/compile/reviews/resolve")
+    def reviews_resolve(req: ReviewResolveReq):
+        _require_compile()
+        if not compile_mgr.reviews.resolve(req.id, req.note):
+            raise HTTPException(status_code=404,
+                                detail=f"review 不存在或已解决：{req.id}")
+        return {"ok": True}
+
+    @app.get("/api/knowledge")
+    def knowledge(path: str | None = None):
+        kd = config.knowledge_dir
+        if not kd.is_dir():
+            raise HTTPException(status_code=404, detail="knowledge 目录不存在")
+        if path:
+            target = (kd / path).resolve()
+            if kd.resolve() not in target.parents or not target.is_file():
+                raise HTTPException(status_code=404, detail="条目不存在")
+            return {"path": path, "content": target.read_text(encoding="utf-8")}
+        entries: list[dict] = []
+        for cat in CATEGORIES:
+            cat_dir = kd / cat
+            if not cat_dir.is_dir():
+                continue
+            for mdf in sorted(cat_dir.glob("*.md")):
+                entries.append({"type": cat, "slug": mdf.stem,
+                                "path": f"{cat}/{mdf.name}"})
+        return {"entries": entries}
+
+    @app.post("/api/compile/lint")
+    def compile_lint():
+        _require_compile()
+        try:
+            return {"issues": compile_mgr.run_lint()}
+        except Exception as e:  # noqa: BLE001 — 失败返回 400 细节，不改写未捕获栈
+            raise HTTPException(status_code=400, detail=str(e)) from e
+
+    @app.post("/api/compile/dedup")
+    def compile_dedup():
+        _require_compile()
+        try:
+            return compile_mgr.run_dedup()
+        except Exception as e:  # noqa: BLE001
+            raise HTTPException(status_code=400, detail=str(e)) from e
+
+    @app.post("/api/compile/enrich")
+    def compile_enrich(dry_run: bool = False):
+        _require_compile()
+        try:
+            return compile_mgr.run_enrich(dry_run=dry_run)
+        except Exception as e:  # noqa: BLE001
+            raise HTTPException(status_code=400, detail=str(e)) from e
+
+    # ---- 大脑层（REQ-306）----
+    def _require_brain():
+        if brain_mgr is None or not brain_mgr.status().get("ready"):
+            raise HTTPException(status_code=400,
+                                detail=brain_mgr.status()["last_error"]
+                                if brain_mgr and brain_mgr.status()["last_error"]
+                                else "大脑未启用（brain.enabled / embedding 配置 / lightrag-hku）")
+
+    @app.get("/api/brain/status")
+    def brain_status():
+        if brain_mgr is None:
+            raise HTTPException(status_code=404, detail="大脑服务未启用")
+        return brain_mgr.status()
+
+    @app.post("/api/brain/index")
+    def brain_index(req: BrainIndexReq):
+        _require_brain()
+        return brain_mgr.index(config.knowledge_dir, full_rebuild=req.rebuild)
+
+    @app.post("/api/brain/query")
+    def brain_query(req: BrainQueryReq):
+        _require_brain()
+        return brain_mgr.ask(req.query, mode=req.mode, top_k=req.top_k)
+
+    @app.get("/api/brain/search")
+    def brain_search(q: str, top_k: int = 10):
+        _require_brain()
+        return {"hits": brain_mgr.search(q, top_k=top_k)}
+
+    @app.get("/api/brain/graph")
+    def brain_graph():
+        _require_brain()
+        return brain_mgr.graph()
 
     # ---- 静态前端 ----
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")

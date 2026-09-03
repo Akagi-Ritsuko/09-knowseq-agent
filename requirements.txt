@@ -8,9 +8,13 @@ requests>=2.31
 readability-lxml>=0.8
 PyYAML>=6.0
 python-dotenv>=1.0
+python-multipart>=0.0.9   # FastAPI 文件上传（/api/import/file）必需
+
+# M3 大脑层（REQ-301 / ADR-009）：LightRAG 向量索引 + 知识图谱 + 引用溯源
+lightrag-hku>=1.5         # 唯一 M3 新增依赖；embedding/LLM 走 OpenAI 兼容云端
 
 # 可选依赖（缺失时对应采集源降级为 error/stopped，不影响整体）
-# screenpipe 服务：请单独安装官方 screenpipe（桌面应用或 CLI）。
-# 项目经其本地 HTTP API(localhost:3030) 拉取 OCR/音频 文本（见 app/capture/screenpipe_source.py）；
-# 官方 Python 客户端包（screenpipe-py）在部分镜像源不可用，故不在此强制安装。
+# 会议音频转写（REQ-104 / ADR-014）：VibeASR.cpp 引擎 + VibeVoice-ASR-BitNet gguf 模型
+# 为外部可选组件（本地构建 + 子进程调用，Windows 需 MinGW-w64），不进 Python 依赖；
+# 路径配置见 config.yaml 的 sources.meeting.engine_path / model_dir。
 lark-oapi>=1.0        # REQ-106 飞书

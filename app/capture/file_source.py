@@ -5,6 +5,7 @@ watchdog 监听配置目录 + drop 热文件夹，新增/修改的 md/txt 自动
 docx/pdf 解析 M1 先不支持（"解析按需"，见 REQ-107）。
 """
 import json
+import time
 from pathlib import Path
 
 from watchdog.events import FileSystemEventHandler
@@ -52,6 +53,16 @@ class FileSource(CaptureSource):
         dirs.append(str(self.config.drop_dir))
         return list(dict.fromkeys(dirs))
 
+    def _is_stable(self, p: Path) -> bool:
+        """间隔 0.5s 两次 stat 大小一致才视为写入完成（防止读到半截文件）。"""
+        try:
+            s1 = p.stat().st_size
+            time.sleep(0.5)
+            s2 = p.stat().st_size
+        except OSError:
+            return False
+        return s1 == s2
+
     def _ingest(self, path: str) -> None:
         p = Path(path)
         if p.suffix.lower() not in SUPPORTED_EXT:
@@ -59,6 +70,8 @@ class FileSource(CaptureSource):
         key = str(p.resolve())
         if key in self._processed:
             return
+        if not self._is_stable(p):
+            return  # 仍在写入，等下一次事件再处理（不标记 processed，之后会重采）
         try:
             content = _decode_text(p.read_bytes()).strip()
         except Exception:
@@ -92,6 +105,7 @@ class FileSource(CaptureSource):
             self.error = str(e)
 
     def stop(self):
+        super().stop()
         if self._observer:
             self._observer.stop()
             self._observer = None

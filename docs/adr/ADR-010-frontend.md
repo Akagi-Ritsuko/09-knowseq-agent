@@ -33,4 +33,5 @@ date: 2026-09-02
 - 关联里程碑：M4
 - 关联任务：T-011
 - 相关 ADR：ADR-009（大脑层）、ADR-011（Windows 集成）
+- 修订：ADR-015（前端部分——"Vue3 或纯 HTML+CDN"改为 React 19 + Vite + TS 并移植 llm_wiki 组件，图谱选型落定 sigma.js 系；FastAPI 后端与页面范围不变）
 - 需求：FR-030、FR-031、FR-040、FR-041、FR-042
