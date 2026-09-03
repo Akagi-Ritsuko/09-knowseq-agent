@@ -10,6 +10,9 @@
  * 适配差异：渲染器用项目统一 marked（wiki-reader 为 ReactMarkdown）；
  * 五类 chip 不移植其多彩 icon 方案，保持单一 accent 设计锁定；
  * sources 指向 inbox/ 素材，统一跳素材页。
+ * 知识管理（T-409 / REQ-409）：详情页新增编辑模式（源码全文编辑 +
+ * 写回确认弹窗）与删除（确认弹窗显示条目名与后果，成功后回列表），
+ * 保存后提供「立即重新索引」入口（POST /api/brain/index）。
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -45,6 +48,9 @@ export default function KnowledgePage() {
   const [detail, setDetail] = useState<Detail | null>(null);
   const [detailErr, setDetailErr] = useState<string | null>(null);
   const [detailBusy, setDetailBusy] = useState(false);
+  // 保存成功提示 + 重新索引（T-409：状态放父级，避免详情重载时丢失）
+  const [kbMsg, setKbMsg] = useState<string | null>(null);
+  const [reindexing, setReindexing] = useState(false);
 
   const loadEntries = useCallback(async () => {
     setListErr(null);
@@ -61,32 +67,41 @@ export default function KnowledgePage() {
     void loadEntries();
   }, [loadEntries]);
 
+  const loadDetail = useCallback(async (p: string) => {
+    setDetailBusy(true);
+    setDetailErr(null);
+    try {
+      setDetail(await api<Detail>(`/api/knowledge?path=${encodeURIComponent(p)}`));
+    } catch (e) {
+      setDetail(null);
+      setDetailErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setDetailBusy(false);
+    }
+  }, []);
+
+  const reindex = useCallback(async () => {
+    setReindexing(true);
+    try {
+      await api('/api/brain/index', { method: 'POST', body: JSON.stringify({}) });
+      setKbMsg('重新索引完成，问答/图谱已生效。');
+    } catch (e) {
+      setKbMsg(null);
+      setDetailErr(`重新索引失败：${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setReindexing(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (!path) {
       setDetail(null);
       setDetailErr(null);
+      setKbMsg(null);
       return;
     }
-    let cancelled = false;
-    setDetailBusy(true);
-    setDetailErr(null);
-    api<Detail>(`/api/knowledge?path=${encodeURIComponent(path)}`)
-      .then((d) => {
-        if (!cancelled) setDetail(d);
-      })
-      .catch((e) => {
-        if (!cancelled) {
-          setDetail(null);
-          setDetailErr(e instanceof Error ? e.message : String(e));
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setDetailBusy(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [path]);
+    void loadDetail(path);
+  }, [path, loadDetail]);
 
   const html = useMemo(() => {
     if (!detail) return '';
@@ -129,7 +144,34 @@ export default function KnowledgePage() {
           </div>
         )}
         {detailErr && <p className="msg msg-err">条目读取失败：{detailErr}</p>}
-        {detail && !detailBusy && <EntryDetail detail={detail} entries={entries ?? []} />}
+        {kbMsg && !detailBusy && (
+          <div className="msg msg-ok">
+            {kbMsg}
+            <button
+              className="btn btn-ghost"
+              style={{ marginLeft: 10 }}
+              onClick={() => void reindex()}
+              disabled={reindexing}
+            >
+              {reindexing ? '重新索引中…' : '立即重新索引'}
+            </button>
+          </div>
+        )}
+        {detail && !detailBusy && (
+          <EntryDetail
+            path={path}
+            detail={detail}
+            entries={entries ?? []}
+            onSaved={async () => {
+              setKbMsg('已保存。重新索引后问答/图谱生效。');
+              await Promise.all([loadDetail(path), loadEntries()]);
+            }}
+            onDeleted={() => {
+              void loadEntries();
+              setSearchParams({});
+            }}
+          />
+        )}
       </section>
     );
   }
@@ -204,9 +246,71 @@ export default function KnowledgePage() {
   );
 }
 
-function EntryDetail({ detail, entries }: { detail: Detail; entries: KnowledgeEntry[] }) {
+function EntryDetail({
+  path,
+  detail,
+  entries,
+  onSaved,
+  onDeleted,
+}: {
+  path: string;
+  detail: Detail;
+  entries: KnowledgeEntry[];
+  onSaved: () => void | Promise<void>;
+  onDeleted: () => void;
+}) {
   const { data, body } = useMemo(() => parseFrontmatter(detail.content), [detail]);
   const hasFm = Object.keys(data).length > 0;
+
+  // 编辑 / 删除（T-409 / REQ-409）
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [confirmSave, setConfirmSave] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [actErr, setActErr] = useState<string | null>(null);
+
+  const startEdit = () => {
+    setDraft(detail.content);
+    setActErr(null);
+    setEditing(true);
+  };
+
+  const save = async () => {
+    setSaving(true);
+    setActErr(null);
+    try {
+      await api('/api/knowledge', {
+        method: 'PUT',
+        body: JSON.stringify({ path, content: draft }),
+      });
+      setEditing(false);
+      setConfirmSave(false);
+      await onSaved();
+    } catch (e) {
+      setActErr(e instanceof Error ? e.message : String(e));
+      setConfirmSave(false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const doDelete = async () => {
+    setDeleting(true);
+    setActErr(null);
+    try {
+      await api(`/api/knowledge?path=${encodeURIComponent(path)}`, {
+        method: 'DELETE',
+      });
+      onDeleted();
+    } catch (e) {
+      setActErr(e instanceof Error ? e.message : String(e));
+      setConfirmDelete(false);
+      setDeleting(false);
+    }
+  };
+
   const html = marked.parse(transformWikilinks(body), { async: false }) as string;
 
   const bodyRef = useRef<HTMLDivElement | null>(null);
@@ -241,14 +345,124 @@ function EntryDetail({ detail, entries }: { detail: Detail; entries: KnowledgeEn
 
   return (
     <>
-      {hasFm && <FrontmatterPanel data={data} entries={entries} />}
-      <div
-        ref={bodyRef}
-        className="panel md-body"
-        onClick={onBodyClick}
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
+      <div className="kb-actions">
+        {editing ? (
+          <>
+            <button className="btn" onClick={() => setConfirmSave(true)} disabled={saving}>
+              保存写回
+            </button>
+            <button
+              className="btn btn-ghost"
+              onClick={() => {
+                setEditing(false);
+                setActErr(null);
+              }}
+              disabled={saving}
+            >
+              取消编辑
+            </button>
+          </>
+        ) : (
+          <>
+            <button className="btn" onClick={startEdit}>
+              编辑
+            </button>
+            <button
+              className="btn btn-danger"
+              onClick={() => {
+                setActErr(null);
+                setConfirmDelete(true);
+              }}
+            >
+              删除
+            </button>
+          </>
+        )}
+      </div>
+      {actErr && <p className="msg msg-err">{actErr}</p>}
+      {editing ? (
+        <div className="panel">
+          <textarea
+            className="textarea edit-area"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            spellCheck={false}
+          />
+        </div>
+      ) : (
+        <>
+          {hasFm && <FrontmatterPanel data={data} entries={entries} />}
+          <div
+            ref={bodyRef}
+            className="panel md-body"
+            onClick={onBodyClick}
+            dangerouslySetInnerHTML={{ __html: html }}
+          />
+        </>
+      )}
+      {confirmSave && (
+        <ConfirmModal
+          title="确认写回"
+          busy={saving}
+          onCancel={() => setConfirmSave(false)}
+          onConfirm={() => void save()}
+        >
+          将把编辑内容写回条目文件 <strong>{path}</strong>，原内容将被覆盖，
+          index.md 同步重建。
+        </ConfirmModal>
+      )}
+      {confirmDelete && (
+        <ConfirmModal
+          title="确认删除"
+          busy={deleting}
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={() => void doDelete()}
+        >
+          将删除条目 <strong>{path}</strong>：文件从磁盘移除、index.md 同步更新、
+          大脑索引删除该条目（问答/图谱不再包含）。此操作不可撤销。
+        </ConfirmModal>
+      )}
     </>
+  );
+}
+
+function ConfirmModal({
+  title,
+  busy,
+  onCancel,
+  onConfirm,
+  children,
+}: {
+  title: string;
+  busy: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className="confirm-backdrop"
+      role="presentation"
+      onClick={busy ? undefined : onCancel}
+    >
+      <div
+        className="confirm-modal"
+        role="dialog"
+        aria-modal="true"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="confirm-title">{title}</h2>
+        <p>{children}</p>
+        <div className="confirm-actions">
+          <button className="btn" onClick={onCancel} disabled={busy}>
+            取消
+          </button>
+          <button className="btn btn-danger" onClick={onConfirm} disabled={busy}>
+            {busy ? '处理中…' : '确认'}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

@@ -1260,3 +1260,62 @@ a.status-row:hover {
   color: var(--err);
   word-break: break-all;
 }
+
+/* ============================================================
+ * 知识管理（T-409）：编辑模式与确认弹窗
+ * ============================================================ */
+.kb-actions {
+  display: flex;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+.edit-area {
+  min-height: 52vh;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+  resize: vertical;
+  white-space: pre;
+}
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 12, 10, 0.55);
+  backdrop-filter: blur(2px);
+  animation: drawer-fade var(--dur-fast) var(--ease);
+}
+.confirm-modal {
+  width: min(460px, 92vw);
+  padding: var(--sp-5);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-m);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
+  animation: drawer-in var(--dur-med) var(--ease);
+}
+.confirm-title {
+  margin: 0 0 var(--sp-3);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+.confirm-modal p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-2);
+}
+.confirm-modal p strong {
+  color: var(--text);
+  word-break: break-all;
+}
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  margin-top: var(--sp-5);
+}

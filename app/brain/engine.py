@@ -288,6 +288,23 @@ class BrainEngine:
         return {"scanned": len(docs), "inserted": len(to_insert),
                 "skipped": len(docs) - len(to_insert)}
 
+    def remove(self, doc_id: str) -> dict:
+        """删除大脑索引中指定 doc_id（REQ-409 索引一致性）。
+
+        LightRAG ``adelete_by_doc_id`` 删除向量/图谱数据 + 本地
+        ``index_state.json`` 状态清理。doc_id 未索引时直接返回不做删除；
+        引擎未就绪时仅清理本地状态（LightRAG 残留数据可由全量重建清理）。
+        """
+        state = self._load_state()
+        if doc_id not in state:
+            return {"doc_id": doc_id, "indexed": False}
+        state.pop(doc_id)
+        self._save_state(state)
+        if self.is_ready():
+            rag = self._require_rag()
+            self._run_safe(lambda: rag.adelete_by_doc_id(doc_id), timeout=600)
+        return {"doc_id": doc_id, "indexed": True}
+
     def _collect_docs(self, kd: Path) -> list[tuple[str, str]]:
         out: list[tuple[str, str]] = []
         for cat in CATEGORIES:

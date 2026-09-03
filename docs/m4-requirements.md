@@ -119,7 +119,7 @@
 |----|------|
 | 描述 | 知识条目查看/编辑（写回 knowledge/ 文件）、删除需确认，并同步处理大脑层索引一致性 |
 | 接口 | 后端补齐：`PUT /api/knowledge`（`{path, content}` 写回，resolve 防穿越）、`DELETE /api/knowledge?path=`（删文件 + `update_index` 重建 index.md + `brain.remove(rel_path)`——LightRAG `adelete_by_doc_id` + 本地 `index_state.json` 清理）；前端：知识库详情页编辑模式（源码编辑 + 保存确认）、删除确认弹窗（显示条目名与后果） |
-| 适配点 | brain 引擎新增 `remove(doc_id)` 同步包装；删除条目若被其他条目 wikilink 引用，lint 可后续检出（不自动改写，行为与 M2 一致）；编辑保存后提示"重新索引后问答/图谱生效"（或触发增量索引按钮） |
+| 适配点 | brain 引擎新增 `remove(doc_id)` 同步包装；删除条目若被其他条目 wikilink 引用，lint 可后续检出（不自动改写，行为与 M2 一致）；编辑保存后提示"重新索引后问答/图谱生效"（或触发增量索引按钮）。实现补记 caveat：索引批处理（ainsert）进行中并发删除可能残留 LightRAG 存储数据（doc_status/vdb_chunks），等管线静默后删除即可彻底清理，或全量重建兜底（已写入 engine.remove docstring） |
 | 验收 | 编辑保存后文件更新、详情页显示新内容、再次索引后问答反映新内容；删除需确认，删除后列表移除、index.md 同步、大脑图谱/检索不再含该条目（索引一致性）；防穿越（越界 path 404） |
 
 ## §10 REQ-410 设置页 FR-042（T-410）

@@ -14,6 +14,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from ..compile.indexer import update_index
 from ..compile.schema import CATEGORIES
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -82,6 +83,11 @@ class BrainIndexReq(BaseModel):
 class MaterialMarkReq(BaseModel):
     path: str
     compiled: bool
+
+
+class KnowledgeWriteReq(BaseModel):
+    path: str
+    content: str
 
 
 class BrainQueryReq(BaseModel):
@@ -292,16 +298,23 @@ def create_app(config, inbox, manager, compile_mgr=None, brain_mgr=None) -> Fast
                                 detail=f"review 不存在或已解决：{req.id}")
         return {"ok": True}
 
-    @app.get("/api/knowledge")
-    def knowledge(path: str | None = None):
+    # ---- 知识管理（REQ-409）----
+    def _resolve_entry(path: str) -> Path:
+        """条目路径防穿越解析：resolve 后必须仍在 knowledge 目录内且存在。"""
         kd = config.knowledge_dir
         if not kd.is_dir():
             raise HTTPException(status_code=404, detail="knowledge 目录不存在")
+        target = (kd / path).resolve()
+        if kd.resolve() not in target.parents or not target.is_file():
+            raise HTTPException(status_code=404, detail="条目不存在")
+        return target
+
+    @app.get("/api/knowledge")
+    def knowledge(path: str | None = None):
         if path:
-            target = (kd / path).resolve()
-            if kd.resolve() not in target.parents or not target.is_file():
-                raise HTTPException(status_code=404, detail="条目不存在")
+            target = _resolve_entry(path)
             return {"path": path, "content": target.read_text(encoding="utf-8")}
+        kd = config.knowledge_dir
         entries: list[dict] = []
         for cat in CATEGORIES:
             cat_dir = kd / cat
@@ -311,6 +324,25 @@ def create_app(config, inbox, manager, compile_mgr=None, brain_mgr=None) -> Fast
                 entries.append({"type": cat, "slug": mdf.stem,
                                 "path": f"{cat}/{mdf.name}"})
         return {"entries": entries}
+
+    @app.put("/api/knowledge")
+    def knowledge_put(req: KnowledgeWriteReq):
+        """条目源码写回 + index.md 重建（防穿越校验同 GET）。"""
+        target = _resolve_entry(req.path)
+        target.write_text(req.content, encoding="utf-8")
+        return {"ok": True, "path": req.path,
+                "index_updated": update_index(config.knowledge_dir)}
+
+    @app.delete("/api/knowledge")
+    def knowledge_delete(path: str):
+        """删除条目文件 + index.md 重建 + 大脑索引一致性（brain.remove）。"""
+        target = _resolve_entry(path)
+        target.unlink()
+        index_updated = update_index(config.knowledge_dir)
+        brain_res = (brain_mgr.remove(path.replace("\\", "/"))
+                     if brain_mgr is not None else None)
+        return {"ok": True, "path": path, "index_updated": index_updated,
+                "brain": brain_res}
 
     @app.post("/api/compile/lint")
     def compile_lint():
