@@ -17,7 +17,7 @@
 | T-008 | M1-采集层：托盘图标左键开关采集雏形 | M1 / ADR-011 | done | 2026-09-02 |
 | T-009 | M2-编译层：云端 LLM 提炼流水线（inbox→知识条目，移植 llm_wiki ingest 内核） | M2 / ADR-008 / ADR-015 | done | 2026-09-03 |
 | T-010 | M3-大脑层：LightRAG 接入（向量+图谱+引用溯源） | M3 / ADR-009 | done | 2026-09-03 |
-| T-011 | M4-交互层：FastAPI + React 前端（问答/图谱/控制/管理/设置，移植 llm_wiki 组件） | M4 / ADR-010 / ADR-015 | doing | |
+| T-011 | M4-交互层：FastAPI + React 前端（问答/图谱/控制/管理/设置，移植 llm_wiki 组件） | M4 / ADR-010 / ADR-015 | done | 2026-09-03 |
 | T-012 | M5-Windows 集成完善 + 演示打磨 | M5 / ADR-011 | todo | |
 
 ## M1 细分待办（实施顺序）
@@ -95,7 +95,7 @@
 | T-408 | 素材管理与采集控制页 FR-040：素材列表/状态标记/预览（后端补 materials mark/content API）+ 各源启停/手动导入/网页抓取 | REQ-408 | — | T-011 | done（2026-09-03） |
 | T-409 | 知识管理页 FR-041：编辑写回/删除确认（后端补 PUT/DELETE /api/knowledge + brain.remove 索引一致性） | REQ-409 | — | T-011 | done（2026-09-03） |
 | T-410 | 设置页 FR-042：LLM API/embedding/监听目录/采集/编译/大脑配置节（后端扩展 settings：brain 节 + llm_api_key 只写不回读），持久化重启生效 | REQ-410 | — | T-011 | done（2026-09-03） |
-| T-411 | 端到端验收（「提问→带引用回答→跳转来源→查看图谱」闭环 + 能力覆盖不回退）+ 旧 static 下线 + 文档同步 | REQ-411 / §13 | — | M4 收尾 | todo |
+| T-411 | 端到端验收（「提问→带引用回答→跳转来源→查看图谱」闭环 + 能力覆盖不回退）+ 旧 static 下线 + 文档同步 | REQ-411 / §13 | — | M4 收尾 | done（2026-09-03） |
 
 ## M2/M4 移植待办（llm_wiki → KnowSeq，ADR-015）
 
@@ -104,7 +104,7 @@
 | ID | 描述 | 关联 REQ | 关联 ADR | 覆盖规划级 | 状态 |
 |---|---|---|---|---|---|
 | T-114 | M2 编译层移植：llm_wiki `src/lib/` ingest 内核 → Python `app/compile/`（两步 CoT / ingest-queue 持久化队列 / SHA256 增量缓存 / dedup 去重 / context-budget / CJK 清洗 / llm-client 多供应商路由 / enrich-wikilinks / lint / review-store）；保留 KnowSeq 自有部分（inbox 适配、五类条目 schema、config、FastAPI 触发） | FR-010/011 | ADR-008/015 | T-009 | done | 2026-09-03 |
-| T-115 | M4 控制台 React 化：React 19 + Vite + TS 重构前端，移植 llm_wiki 知识库展示组件（wiki 浏览/wikilink/frontmatter）与图谱组件（sigma.js + graphology + ForceAtlas2）；FastAPI 后端不变 | FR-030/031/040~042 | ADR-010/015 | T-011 | todo |
+| T-115 | M4 控制台 React 化：React 19 + Vite + TS 重构前端，移植 llm_wiki 知识库展示组件（wiki 浏览/wikilink/frontmatter）与图谱组件（sigma.js + graphology + ForceAtlas2）；FastAPI 后端不变 | FR-030/031/040~042 | ADR-010/015 | T-011 | done（2026-09-03） |
 | T-116 | Chrome 剪藏插件（MV3）：交互参考 llm_wiki `extension/`，通信改接 KnowSeq FastAPI 网页抓取/手动导入端点（替代其 clip_server） | REQ-108/109 延伸 | ADR-007/015 | T-006/T-007 延伸 | todo |
 
 ## 扩展点备忘
@@ -117,5 +117,5 @@
 
 1. **M2 编译层完成（2026-09-03，T-214 端到端验收 31/31 通过，M2 关闭）**：真实 LLM（火山方舟 deepseek-v4-flash）全链路——3 条素材编译出 9 条五类条目 + index/log + sources 引用；二次编译幂等（compiled 标记）与缓存命中路径；lint/dedup/enrich 走通；控制台 compile 8 端点全流程。端到端发现并修复：DeepSeek 推理系列（含火山 ark 等 OpenAI 兼容端点）结构化输出默认关 thinking（llm_client._apply_reasoning 泛化，enrich JSON 契约不再被长推理拖慢/超时）。
 2. **M3 大脑层完成（2026-09-03，T-306 端到端验收 19/19 通过，M3 关闭）**：LightRAG（lightrag-hku 1.5.7）对 knowledge/ 建向量索引+知识图谱+引用溯源——BrainEngine 同步门面（内部专用事件循环线程）、索引增量幂等（rel doc_id+内容哈希）、语义检索（naive）、带引用问答（hybrid 等）、图谱导出（nodes/edges JSON）、brain API 5 端点 + 控制台大脑面板。**embedding 用本地模型**（bge-small-zh-v1.5，ModelScope 下载到 models/embed/，sentence-transformers CPU）——用户无 embedding API，全本地向量化；问答/实体抽取复用云端 dsv4flash。真实验收：语义检索命中剪贴板条目、问答带引用、31 节点图谱。
-3. **M4 交互层进行中（T-011/T-115，细分 T-401~411）**：React 化前端（问答/图谱/知识库/编译/素材/采集控制/设置），FastAPI 后端不变；图谱可视化按 ADR-010 修订版/ADR-015 落定的 **sigma.js 系**执行（sigma.js v3 + @react-sigma/core + graphology + graphology-layout-forceatlas2 + graphology-communities-louvain；M3 graph JSON 已就绪，前端转换为 graphology Graph）；需求拆分见 m4-requirements.md（REQ-401~411）。
+3. **M4 交互层完成（2026-09-03，T-411 端到端验收通过，M4 关闭，T-011/T-115 done）**：React 化前端七页全量落地（问答/图谱/知识库/编译/素材/采集控制/设置，细分 T-401~411 全 done）；图谱 sigma.js 系（ADR-010 修订版/ADR-015）；真实环境闭环走查「提问→带引用回答→跳转来源→查看图谱」通过（337 节点/544 关系）；旧 app/web/static/ 已删除，dist 托管 + SPA fallback + 前端 404 页兜底，旧路径不可达；需求拆分见 m4-requirements.md（REQ-401~411）。
 4. **补 M1 遗留**：飞书凭据（app_id/app_secret）就绪后联调 T-106（T-004，REQ-106 验收前提）；T-113 待转写输出 JSON schema 确认后处置（若含 speaker/timestamp 字段则扩展 meeting 源 meta）。

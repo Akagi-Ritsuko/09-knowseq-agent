@@ -17,8 +17,7 @@ from pydantic import BaseModel
 from ..compile.indexer import update_index
 from ..compile.schema import CATEGORIES
 
-STATIC_DIR = Path(__file__).resolve().parent / "static"
-DIST_DIR = STATIC_DIR.parent / "dist"  # M4 React 前端构建产物（webui build 输出）
+DIST_DIR = Path(__file__).resolve().parent / "dist"  # M4 React 前端构建产物（webui build 输出）
 
 
 def _host_part(value: str) -> str:
@@ -448,9 +447,7 @@ def create_app(config, inbox, manager, compile_mgr=None, brain_mgr=None) -> Fast
         _require_brain()
         return brain_mgr.graph()
 
-    # ---- 静态前端（M4 REQ-401：dist 优先，旧 static 兜底保留至 T-411 下线）----
-    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
-
+    # ---- 静态前端（M4 REQ-411：旧 static 已下线，dist 托管 + SPA fallback）----
     dist_index = DIST_DIR / "index.html"
     if dist_index.exists():
         if (DIST_DIR / "assets").is_dir():
@@ -464,9 +461,5 @@ def create_app(config, inbox, manager, compile_mgr=None, brain_mgr=None) -> Fast
             if full_path and candidate.is_file() and candidate.is_relative_to(DIST_DIR):
                 return FileResponse(candidate)
             return FileResponse(dist_index)  # SPA 前端路由兜底
-    else:
-        @app.get("/")
-        def index():
-            return FileResponse(STATIC_DIR / "index.html")
 
     return app
