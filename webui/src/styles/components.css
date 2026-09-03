@@ -746,3 +746,145 @@ a.status-row:hover {
     margin-top: 0;
   }
 }
+
+/* ============================================================
+ * 知识库浏览页（T-406：五类分组列表 / 条目详情 / frontmatter 面板）
+ * ============================================================ */
+
+/* ---- 列表工具条 ---- */
+.kb-toolbar .kb-search {
+  flex: 1;
+  min-width: 220px;
+  width: auto;
+}
+
+/* ---- 条目卡片网格（按类分组的 panel 内） ---- */
+.entry-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: var(--sp-2);
+}
+.entry {
+  display: block;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  background: var(--bg-elevated);
+  min-width: 0;
+  transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.entry:hover {
+  border-color: var(--accent);
+  background: var(--bg-hover);
+}
+.entry-slug {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.entry:hover .entry-slug {
+  color: var(--accent);
+}
+
+/* ---- 详情面包屑 ---- */
+.kb-crumb {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+.kb-path {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-3);
+  word-break: break-all;
+}
+
+/* ---- frontmatter 面板（title/type/date + 标签/关联/来源行） ---- */
+.fm {
+  margin-bottom: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.fm-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+.fm-title {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+.fm-date {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+.fm-desc {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-2);
+}
+.fm-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.fm-label {
+  flex-shrink: 0;
+  width: 44px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.fm-extras {
+  padding-top: var(--sp-2);
+  border-top: 1px dashed var(--border);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--text-2);
+}
+.fm-extras .k {
+  margin-right: 6px;
+  color: var(--text-3);
+}
+
+/* ---- 小号 chip（frontmatter 行内用） ---- */
+.chip-sm {
+  padding: 1px 8px;
+  font-size: 11px;
+}
+.chip-broken {
+  border-style: dashed;
+  border-color: var(--warn);
+  color: var(--warn);
+  cursor: help;
+}
+
+/* ---- 断链 wikilink（与 .wikilink 区分的可辨识样式） ---- */
+.wikilink-broken {
+  color: var(--warn);
+  background: rgba(230, 180, 85, 0.1);
+  padding: 0 5px;
+  border-radius: var(--radius-s);
+  text-decoration: underline dashed var(--warn);
+  text-underline-offset: 3px;
+  cursor: help;
+  font-size: 0.95em;
+}
