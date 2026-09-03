@@ -1,0 +1,57 @@
+/* ============================================================
+ * KnowSeq 控制台设计系统 · Tokens（T-402）
+ * 设计方向：dark tech 工具风（本地知识引擎控制台）
+ * 三档 dial：VARIANCE 3 / MOTION 3 / DENSITY 6
+ * 锁定：单一 dark 主题；单一 accent（绿，ok 状态同族复用）；
+ *       圆角系统：控件 6px（--radius-s）、面板 10px（--radius-m）
+ * ============================================================ */
+:root {
+  /* ---- 色板 · 分层背景（无纯黑） ---- */
+  --bg: #0c0d10;             /* 页面基底 */
+  --bg-panel: #14161a;       /* 面板 */
+  --bg-elevated: #1c1f25;    /* 悬浮 / 输入 / 表头 */
+  --bg-hover: #23262d;       /* 悬停 */
+
+  /* ---- 色板 · 边框 ---- */
+  --border: #262a31;
+  --border-strong: #343a44;
+
+  /* ---- 色板 · 文本 ---- */
+  --text: #e6e8eb;           /* 主文本 */
+  --text-2: #9aa1ac;         /* 次级文本 */
+  --text-3: #646b76;         /* 弱化 / 占位 */
+
+  /* ---- 色板 · 语义（唯一 accent + 状态色） ---- */
+  --accent: #3ecf8e;         /* 交互强调 / ok（同族复用） */
+  --accent-strong: #5adfa4;  /* hover */
+  --accent-dim: rgba(62, 207, 142, 0.14);   /* accent 弱底 */
+  --accent-text-on: #06281a; /* accent 底上的文字（对比 ≥ 7:1） */
+  --warn: #e6b455;
+  --err: #f0716c;
+
+  /* ---- 字体（本地离线工具：系统栈，不引 web font） ---- */
+  --font-ui: system-ui, 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  --font-mono: 'Cascadia Code', Consolas, 'JetBrains Mono', ui-monospace, monospace;
+
+  /* ---- 圆角（Shape Lock：仅两档） ---- */
+  --radius-s: 6px;   /* 控件：按钮 / 输入 / chip */
+  --radius-m: 10px;  /* 面板 */
+
+  /* ---- 间距基数 4px ---- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+
+  /* ---- 动效（MOTION 3：仅 fast 级过渡，无循环动画） ---- */
+  --dur-fast: 0.15s;
+  --dur-med: 0.25s;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ---- 层级 ---- */
+  --z-nav: 10;
+  --z-modal: 40;
+  --z-toast: 50;
+}

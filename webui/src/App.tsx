@@ -21,7 +21,10 @@ export default function App() {
   return (
     <div className="app-shell">
       <aside className="app-nav">
-        <div className="brand">KnowSeq</div>
+        <div className="brand">
+          KnowSeq
+          <span className="brand-sub">local knowledge agent</span>
+        </div>
         {NAV.map((item) => (
           <NavLink
             key={item.to}
@@ -42,7 +45,16 @@ export default function App() {
           <Route path="/materials" element={<MaterialsPage />} />
           <Route path="/capture" element={<CapturePage />} />
           <Route path="/settings" element={<SettingsPage />} />
-          <Route path="*" element={<div className="page">页面不存在</div>} />
+          <Route
+            path="*"
+            element={
+              <div className="page">
+                <div className="empty">
+                  <strong>404</strong>页面不存在
+                </div>
+              </div>
+            }
+          />
         </Routes>
       </main>
     </div>

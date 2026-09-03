@@ -85,8 +85,8 @@
 
 | ID | 描述 | 关联 REQ | 关联 ADR | 覆盖规划级 | 状态 |
 |---|---|---|---|---|---|
-| T-401 | 前端工程骨架：webui/（Vite+React19+TS）、dev 代理 /api、构建输出 app/web/dist、FastAPI dist 优先/static 兜底、七页路由骨架 | REQ-401 | ADR-010/015 | T-011/T-115 前置 | done | 2026-09-03 |
-| T-402 | 设计系统：taste-skill（design-taste-frontend v2）调研→dial（中密度/克制动效）→tokens+基础组件，全站共享 | REQ-402 | — | T-011 前置 | todo |
+| T-401 | 前端工程骨架：webui/（Vite+React19+TS）、dev 代理 /api、构建输出 app/web/dist、FastAPI dist 优先/static 兜底、七页路由骨架 | REQ-401 | ADR-010/015 | T-011/T-115 前置 | done（2026-09-03） |
+| T-402 | 设计系统：taste-skill（design-taste-frontend v2）调研→dial（中密度/克制动效）→tokens+基础组件，全站共享 | REQ-402 | — | T-011 前置 | done（2026-09-03） |
 | T-403 | 全局布局与状态总览：AppShell 侧边导航七页 + 全局状态条（采集/编译/大脑聚合、索引触发） | REQ-403 | — | T-011 | todo |
 | T-404 | 编译页：状态/触发/Review/手动工具 lint-dedup-enrich（能力对齐旧页面） | REQ-404 | — | T-011 | todo |
 | T-405 | 问答页 FR-030：brain query/search、带引用回答、引用跳转来源（条目原文/素材） | REQ-405 | — | T-011/T-115 | todo |

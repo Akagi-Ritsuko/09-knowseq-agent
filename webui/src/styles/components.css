@@ -1,0 +1,463 @@
+/* ============================================================
+ * KnowSeq 控制台 · 共享组件类（T-402 设计系统）
+ * 全站唯一组件样式来源：按钮 / chip / 面板 / 表格 / 表单 /
+ * 开关 / 消息 / 代码块 / 空态 / 骨架 / Markdown 排版
+ * ============================================================ */
+
+/* ---- 按钮（:active 触觉反馈） ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 7px 14px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-s);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.btn:active {
+  transform: scale(0.98);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-text-on);
+  font-weight: 600;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-strong);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-2);
+  border-color: var(--border-strong);
+}
+.btn-ghost:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--err);
+  border-color: var(--err);
+}
+.btn-danger:hover:not(:disabled) {
+  background: rgba(240, 113, 108, 0.12);
+}
+
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+/* ---- chip（语义状态） ---- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-elevated);
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+.chip-ok {
+  color: var(--accent);
+  border-color: rgba(62, 207, 142, 0.4);
+  background: var(--accent-dim);
+}
+.chip-warn {
+  color: var(--warn);
+  border-color: rgba(230, 180, 85, 0.4);
+  background: rgba(230, 180, 85, 0.1);
+}
+.chip-err {
+  color: var(--err);
+  border-color: rgba(240, 113, 108, 0.4);
+  background: rgba(240, 113, 108, 0.1);
+}
+.chip-off {
+  color: var(--text-3);
+}
+
+/* ---- 面板（功能分区容器） ---- */
+.panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  padding: var(--sp-4) var(--sp-5);
+}
+.panel + .panel {
+  margin-top: var(--sp-4);
+}
+.panel-title {
+  margin: 0 0 var(--sp-3);
+  font-size: 14px;
+  font-weight: 600;
+}
+.panel-title small {
+  margin-left: var(--sp-2);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-3);
+}
+
+/* ---- 表格（仅 bottom 分隔线） ---- */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.table th {
+  text-align: left;
+  padding: 6px 10px;
+  color: var(--text-3);
+  font-weight: 500;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border-strong);
+  white-space: nowrap;
+}
+.table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+.table tbody tr:hover {
+  background: var(--bg-hover);
+}
+.table .num {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+/* ---- 表单（label 在上方） ---- */
+.field {
+  display: block;
+  margin-bottom: var(--sp-3);
+}
+.field-label {
+  display: block;
+  margin-bottom: var(--sp-1);
+  font-size: 12px;
+  color: var(--text-2);
+}
+.field-hint {
+  margin-top: var(--sp-1);
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.input,
+.textarea,
+.select {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-s);
+  background: var(--bg-elevated);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  transition: border-color var(--dur-fast) var(--ease);
+}
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--text-3);
+}
+.input:focus,
+.textarea:focus,
+.select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.input:disabled,
+.textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.textarea {
+  min-height: 88px;
+  resize: vertical;
+  line-height: 1.6;
+}
+.input-mono {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+
+/* ---- 开关（toggle） ----
+ * 结构：<label class="switch"><input type="checkbox"/><span class="switch-track"/><span>文案</span></label>
+ */
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-2);
+  user-select: none;
+}
+.switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.switch-track {
+  flex-shrink: 0;
+  width: 32px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  position: relative;
+  transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+.switch-track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--text-3);
+  transition: transform var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.switch input:checked + .switch-track {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+.switch input:checked + .switch-track::after {
+  transform: translateX(14px);
+  background: var(--accent);
+}
+.switch input:focus-visible + .switch-track {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---- 操作反馈消息 ---- */
+.msg {
+  margin-top: var(--sp-2);
+  font-size: 12.5px;
+  color: var(--text-2);
+  min-height: 1.2em;
+  white-space: pre-wrap;
+}
+.msg-ok {
+  color: var(--accent);
+}
+.msg-err {
+  color: var(--err);
+}
+
+/* ---- 代码 / JSON 展示块 ---- */
+.pre {
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  background: var(--bg);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-2);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 360px;
+  overflow: auto;
+}
+
+/* ---- 空状态 ---- */
+.empty {
+  padding: var(--sp-6) var(--sp-4);
+  text-align: center;
+  color: var(--text-3);
+  font-size: 13px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-m);
+}
+.empty strong {
+  display: block;
+  margin-bottom: var(--sp-1);
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+/* ---- 骨架屏（加载占位） ---- */
+.skeleton {
+  display: block;
+  height: 14px;
+  border-radius: var(--radius-s);
+  background: linear-gradient(
+    90deg,
+    var(--bg-elevated) 25%,
+    var(--bg-hover) 50%,
+    var(--bg-elevated) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-wave 1.4s ease infinite;
+}
+@keyframes skeleton-wave {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* ---- 工具条 / 布局辅助 ---- */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3) var(--sp-4);
+}
+@media (max-width: 720px) {
+  .grid2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- mono 数据 ---- */
+.mono {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+.path {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+/* ============================================================
+ * Markdown 排版（知识条目详情 / 问答回答共用）
+ * ============================================================ */
+.md-body {
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--text);
+  word-break: break-word;
+}
+.md-body h1,
+.md-body h2,
+.md-body h3,
+.md-body h4 {
+  margin: 1.2em 0 0.5em;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.md-body h1 {
+  font-size: 18px;
+}
+.md-body h2 {
+  font-size: 16px;
+}
+.md-body h3 {
+  font-size: 14.5px;
+}
+.md-body h1:first-child,
+.md-body h2:first-child,
+.md-body h3:first-child {
+  margin-top: 0;
+}
+.md-body p {
+  margin: 0.6em 0;
+}
+.md-body ul,
+.md-body ol {
+  margin: 0.6em 0;
+  padding-left: 1.5em;
+}
+.md-body li {
+  margin: 0.25em 0;
+}
+.md-body a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.md-body a:hover {
+  text-decoration: underline;
+}
+.md-body code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 1px 5px;
+  border-radius: var(--radius-s);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
+.md-body pre {
+  margin: 0.8em 0;
+  padding: var(--sp-3);
+  border-radius: var(--radius-s);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  overflow: auto;
+}
+.md-body pre code {
+  padding: 0;
+  border: none;
+  background: none;
+}
+.md-body blockquote {
+  margin: 0.8em 0;
+  padding: 0.2em 0 0.2em var(--sp-3);
+  border-left: 2px solid var(--border-strong);
+  color: var(--text-2);
+}
+.md-body table {
+  border-collapse: collapse;
+  margin: 0.8em 0;
+  font-size: 12.5px;
+}
+.md-body th,
+.md-body td {
+  padding: 5px 10px;
+  border: 1px solid var(--border-strong);
+  text-align: left;
+}
+.md-body hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.2em 0;
+}
+
+/* ---- wikilink（[[条目]] 链接，知识库/问答引用共用） ---- */
+.wikilink {
+  color: var(--accent);
+  background: var(--accent-dim);
+  padding: 0 5px;
+  border-radius: var(--radius-s);
+  cursor: pointer;
+  font-size: 0.95em;
+}
+.wikilink:hover {
+  text-decoration: underline;
+}

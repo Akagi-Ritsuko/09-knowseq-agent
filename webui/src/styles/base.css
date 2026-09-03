@@ -1,40 +1,195 @@
-/* T-401 骨架占位样式 —— T-402 设计系统产出 tokens 后整体取代 */
+/* ============================================================
+ * KnowSeq 控制台 · 全局基础与布局壳（T-402 设计系统）
+ * 取代 T-401 骨架占位样式；全部页面共享，禁止各页另写一套
+ * ============================================================ */
+@import './tokens.css';
+
 * {
   box-sizing: border-box;
 }
+
+html,
 body {
   margin: 0;
-  font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif;
-  color: #1c1c1c;
-  background: #f7f7f5;
+  padding: 0;
 }
+
+body {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--accent-dim);
+  color: var(--text);
+}
+
+/* ---- 滚动条（dark 融合） ---- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ---- 焦点可见性（a11y） ---- */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-s);
+}
+
+/* ---- 动效尊重系统偏好 ---- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================================
+ * 布局壳
+ * ============================================================ */
 .app-shell {
   display: flex;
   min-height: 100vh;
 }
+
 .app-nav {
-  width: 200px;
-  border-right: 1px solid #e3e3df;
-  padding: 16px 12px;
+  width: 208px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  padding: var(--sp-5) var(--sp-3);
+  border-right: 1px solid var(--border);
+  background: var(--bg-panel);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
 }
-.app-nav a {
+
+.brand {
+  padding: 0 var(--sp-2);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.brand-sub {
   display: block;
-  padding: 8px 10px;
-  border-radius: 6px;
-  color: #444;
-  text-decoration: none;
-  margin-bottom: 2px;
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-3);
+  letter-spacing: 0.04em;
 }
-.app-nav a.active {
-  background: #e8e8e4;
-  color: #111;
+
+.app-nav nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.app-nav nav a {
+  display: block;
+  padding: 7px var(--sp-3);
+  border-radius: var(--radius-s);
+  color: var(--text-2);
+  text-decoration: none;
+  font-size: 13.5px;
+  border-left: 2px solid transparent;
+  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+
+.app-nav nav a:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+
+.app-nav nav a.active {
+  color: var(--text);
+  background: var(--bg-elevated);
+  border-left-color: var(--accent);
   font-weight: 600;
 }
-.brand {
-  font-weight: 700;
-  margin: 4px 8px 16px;
-}
+
 .app-main {
   flex: 1;
-  padding: 24px 28px;
+  min-width: 0;
+  padding: var(--sp-5) var(--sp-6);
+}
+
+/* ---- 页面容器与页头 ---- */
+.page {
+  max-width: 1080px;
+}
+
+.page-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-5);
+}
+
+.page-head h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.page-desc {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+@media (max-width: 860px) {
+  .app-shell {
+    flex-direction: column;
+  }
+  .app-nav {
+    width: 100%;
+    height: auto;
+    position: static;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .app-nav nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .app-nav nav a.active {
+    border-left: none;
+    box-shadow: inset 0 -2px 0 var(--accent);
+  }
+  .app-main {
+    padding: var(--sp-4);
+  }
 }
