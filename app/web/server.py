@@ -49,6 +49,14 @@ class WebIngestReq(BaseModel):
     url: str
 
 
+def _check_url(value: str, label: str) -> str:
+    """设置页 URL 字段校验：空串放行，否则必须 http(s):// 开头（T-410）。"""
+    v = value.strip()
+    if v and not v.startswith(("http://", "https://")):
+        raise HTTPException(status_code=422, detail=f"{label} 需为 http(s):// 开头的 URL 或留空")
+    return v
+
+
 class SettingsReq(BaseModel):
     web_port: int | None = None
     auto_start: bool | None = None
@@ -64,6 +72,13 @@ class SettingsReq(BaseModel):
     compile_auto: bool | None = None
     llm_base_url: str | None = None
     llm_model: str | None = None
+    # T-410：大脑配置节 + LLM API Key（只写不回读）
+    brain_enabled: bool | None = None
+    brain_embedding_base_url: str | None = None
+    brain_embedding_model: str | None = None
+    brain_llm_base_url: str | None = None
+    brain_llm_model: str | None = None
+    llm_api_key: str | None = None
 
 
 class CompileTriggerReq(BaseModel):
@@ -233,10 +248,28 @@ def create_app(config, inbox, manager, compile_mgr=None, brain_mgr=None) -> Fast
                 "llm_model": config.get("compile.llm.model", ""),
                 "llm_key_configured": bool(config.secret("LLM_API_KEY")),
             },
+            # T-410：大脑配置节（LLM Key 恒不回读，仅返回已设置标志）
+            "brain": {
+                "enabled": config.get("brain.enabled", False),
+                "embedding_base_url": config.get("brain.embedding.base_url", ""),
+                "embedding_model": config.get("brain.embedding.model", ""),
+                "llm_base_url": config.get("brain.llm.base_url", ""),
+                "llm_model": config.get("brain.llm.model", ""),
+            },
+            "llm_key_configured": bool(config.secret("LLM_API_KEY")),
         }
 
     @app.post("/api/settings")
     def save_settings(req: SettingsReq):
+        # 校验先行（非法值 422，不做部分写入）
+        if req.web_port and not (1 <= int(req.web_port) <= 65535):
+            raise HTTPException(status_code=422, detail="Web 端口需为 1-65535 的整数")
+        if req.llm_base_url is not None:
+            _check_url(req.llm_base_url, "LLM API base_url")
+        if req.brain_llm_base_url is not None:
+            _check_url(req.brain_llm_base_url, "大脑 LLM base_url")
+        if req.brain_embedding_base_url is not None:
+            _check_url(req.brain_embedding_base_url, "Embedding base_url")
         if req.web_port:
             config.set("web.port", int(req.web_port))
         if req.auto_start is not None:
@@ -264,6 +297,19 @@ def create_app(config, inbox, manager, compile_mgr=None, brain_mgr=None) -> Fast
             config.set("compile.llm.base_url", req.llm_base_url.strip())
         if req.llm_model is not None:
             config.set("compile.llm.model", req.llm_model.strip())
+        # T-410：大脑配置节 + LLM API Key（敏感项走 .env，不入 config.yaml）
+        if req.brain_enabled is not None:
+            config.set("brain.enabled", bool(req.brain_enabled))
+        if req.brain_embedding_base_url is not None:
+            config.set("brain.embedding.base_url", req.brain_embedding_base_url.strip())
+        if req.brain_embedding_model is not None:
+            config.set("brain.embedding.model", req.brain_embedding_model.strip())
+        if req.brain_llm_base_url is not None:
+            config.set("brain.llm.base_url", req.brain_llm_base_url.strip())
+        if req.brain_llm_model is not None:
+            config.set("brain.llm.model", req.brain_llm_model.strip())
+        if req.llm_api_key:
+            config.set_env("LLM_API_KEY", req.llm_api_key.strip())
         config.save()
         return {"ok": True, "settings": settings()}
 

@@ -1319,3 +1319,18 @@ a.status-row:hover {
   gap: var(--sp-2);
   margin-top: var(--sp-5);
 }
+
+/* ---- T-410 设置页 ---- */
+.set-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px dashed var(--border);
+  font-size: 13px;
+  color: var(--text);
+}
+.set-row:last-child {
+  border-bottom: none;
+}
