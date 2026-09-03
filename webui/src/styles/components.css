@@ -270,6 +270,65 @@
 .msg-err {
   color: var(--err);
 }
+.msg-warn {
+  color: var(--warn);
+}
+
+/* ---- 统计块（队列计数 / 面板内数字总览） ---- */
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3) var(--sp-5);
+  margin-top: var(--sp-3);
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.stat-num {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+.stat-num.err {
+  color: var(--err);
+}
+.stat-num.warn {
+  color: var(--warn);
+}
+.stat-label {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+/* ---- 无样式列表（路径清单等） ---- */
+.plain-list {
+  margin: var(--sp-2) 0 0;
+  padding-left: 1.2em;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+.plain-list li {
+  margin: 2px 0;
+}
+
+/* ---- 表格内联操作（Review 解决列等） ---- */
+.review-detail {
+  max-width: 280px;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+.review-resolve {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  white-space: nowrap;
+}
 
 /* ---- 代码 / JSON 展示块 ---- */
 .pre {
