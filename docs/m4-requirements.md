@@ -145,22 +145,24 @@
 ## §12 依赖与构建配置枚举（webui/）
 
 ```jsonc
-// webui/package.json 关键依赖（实施时以最新稳定版为准）
+// webui/package.json 关键依赖（T-407 完成后与实际安装对齐）
 {
   "dependencies": {
     "react": "^19",
     "react-dom": "^19",
-    "react-router-dom": "^7",
-    "marked": "^16",
-    "sigma": "^3",
-    "@react-sigma/core": "^4",
-    "graphology": "^0.26",
-    "graphology-layout-forceatlas2": "^0.10",
-    "graphology-communities-louvain": "^2"
+    "react-router-dom": "^7.6",
+    "marked": "^18",
+    "sigma": "^3.0.3",
+    "@react-sigma/core": "^5.0.6",
+    "graphology": "^0.26.0",
+    "graphology-layout-forceatlas2": "^0.10.1",
+    "graphology-communities-louvain": "^2.0.2"
   },
-  "devDependencies": { "vite": "^7", "typescript": "^5", "@vitejs/plugin-react": "^5" }
+  "devDependencies": { "vite": "^6.3.5", "typescript": "~5.8.3", "@vitejs/plugin-react": "^4.5.0" }
 }
 ```
+
+> 版本偏差说明：@react-sigma/core 实际取 v5（规划写 ^4，v5 为当前稳定版且适配 React 19）；vite 取 6（Node 22.9.0 不满足 Vite 7 引擎要求 ≥22.12，见 T-401）；marked 实际 ^18。
 
 ```ts
 // webui/vite.config.ts 要点

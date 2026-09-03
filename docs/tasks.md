@@ -91,7 +91,7 @@
 | T-404 | 编译页：状态/触发/Review/手动工具 lint-dedup-enrich（能力对齐旧页面） | REQ-404 | — | T-011 | done（2026-09-03） |
 | T-405 | 问答页 FR-030：brain query/search、带引用回答、引用跳转来源（条目原文/素材） | REQ-405 | — | T-011/T-115 | done（2026-09-03） |
 | T-406 | 知识库浏览页：五类列表+详情（Markdown/[[wikilink]] 跳转/frontmatter 面板）+ index/log 视图（移植 llm_wiki wiki-reader） | REQ-406 | ADR-015 | T-011/T-115 | done（2026-09-03） |
-| T-407 | 图谱页 FR-031：brain graph JSON→graphology→sigma.js v3（Web Worker 布局/高亮/详情/缩放控件，移植 graph-view）；增强 Louvain 着色/筛选/搜索 | REQ-407 | ADR-010/015 | T-011/T-115 | todo |
+| T-407 | 图谱页 FR-031：brain graph JSON→graphology→sigma.js v3（Web Worker 布局/高亮/详情/缩放控件，移植 graph-view）；增强 Louvain 着色/筛选/搜索 | REQ-407 | ADR-010/015 | T-011/T-115 | done（2026-09-03） |
 | T-408 | 素材管理与采集控制页 FR-040：素材列表/状态标记/预览（后端补 materials mark/content API）+ 各源启停/手动导入/网页抓取 | REQ-408 | — | T-011 | todo |
 | T-409 | 知识管理页 FR-041：编辑写回/删除确认（后端补 PUT/DELETE /api/knowledge + brain.remove 索引一致性） | REQ-409 | — | T-011 | todo |
 | T-410 | 设置页 FR-042：LLM API/embedding/监听目录/采集/编译/大脑配置节（后端扩展 settings：brain 节 + llm_api_key 只写不回读），持久化重启生效 | REQ-410 | — | T-011 | todo |

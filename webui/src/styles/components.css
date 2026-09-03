@@ -888,3 +888,269 @@ a.status-row:hover {
   cursor: help;
   font-size: 0.95em;
 }
+
+/* ============================================================
+ * 图谱页（T-407）：sigma.js 画布 + 浮层工具栏/图例/详情面板
+ * ============================================================ */
+.page.graph-page {
+  max-width: none;
+}
+.page-head-side {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-shrink: 0;
+}
+.stat-inline {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.graph-shell {
+  position: relative;
+  height: calc(100vh - 220px);
+  min-height: 460px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  background:
+    radial-gradient(circle at 50% 40%, rgba(62, 207, 142, 0.04), transparent 60%),
+    var(--bg-panel);
+  overflow: hidden;
+}
+/* @react-sigma/core lib/style.css 的 .sigma-container 默认撑满 */
+.graph-canvas .sigma-container {
+  outline: none;
+}
+/* @react-sigma/core style.css 默认 --sigma-background-color:#fff（.react-sigma 白底）——
+   覆盖为透明，透出 .graph-shell 的暗色面板底（sigma 各 WebGL 层 canvas 本身透明清除） */
+.graph-canvas {
+  --sigma-background-color: transparent;
+  --sigma-controls-background-color: transparent;
+  background: transparent;
+}
+
+.graph-toolbar {
+  position: absolute;
+  top: var(--sp-3);
+  left: var(--sp-3);
+  z-index: 5;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+.gt-search {
+  position: relative;
+}
+.gt-search input {
+  width: 200px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-family: var(--font-ui);
+  color: var(--text);
+  background: rgba(12, 13, 16, 0.88);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-s);
+  outline: none;
+  backdrop-filter: blur(4px);
+}
+.gt-search input:focus {
+  border-color: var(--accent);
+}
+.gt-search input::placeholder {
+  color: var(--text-3);
+}
+.graph-search-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 280px;
+  max-height: 280px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  background: rgba(20, 22, 26, 0.97);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-s);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  z-index: 6;
+}
+.gsp-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  font-size: 12.5px;
+  color: var(--text);
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  cursor: pointer;
+}
+.gsp-item:last-child {
+  border-bottom: none;
+}
+.gsp-item:hover {
+  background: var(--bg-hover);
+}
+.gsp-item em {
+  margin-left: auto;
+  font-style: normal;
+  font-size: 11px;
+  color: var(--text-3);
+}
+.gp-mode {
+  background: rgba(12, 13, 16, 0.88);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  backdrop-filter: blur(4px);
+}
+
+.graph-zoom {
+  position: absolute;
+  top: var(--sp-3);
+  right: var(--sp-3);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.gzoom-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--text-2);
+  background: rgba(12, 13, 16, 0.88);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-s);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+.gzoom-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.graph-legend {
+  position: absolute;
+  left: var(--sp-3);
+  bottom: var(--sp-3);
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  max-width: 320px;
+  padding: 8px 12px;
+  font-size: 11.5px;
+  color: var(--text-2);
+  background: rgba(12, 13, 16, 0.88);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  backdrop-filter: blur(4px);
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.legend-dot {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.graph-detail {
+  position: absolute;
+  top: 48px;
+  right: var(--sp-3);
+  z-index: 5;
+  width: 250px;
+  max-height: calc(100% - 64px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  background: rgba(20, 22, 26, 0.96);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-m);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(6px);
+}
+.gd-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+.gd-title {
+  font-size: 13.5px;
+  line-height: 1.45;
+  word-break: break-all;
+}
+.gd-close {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  color: var(--text-3);
+  background: none;
+  border: none;
+  border-radius: var(--radius-s);
+  cursor: pointer;
+}
+.gd-close:hover {
+  color: var(--err);
+  background: var(--bg-hover);
+}
+.gd-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.gd-neighbors {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px dashed var(--border);
+  padding-top: var(--sp-2);
+}
+.gd-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-3);
+}
+.gd-link {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 8px;
+  background: none;
+  border: none;
+  border-radius: var(--radius-s);
+  text-align: left;
+  cursor: pointer;
+}
+.gd-link:hover {
+  background: var(--bg-hover);
+}
+.gd-rel {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--accent);
+  opacity: 0.85;
+}
+.gd-nlabel {
+  font-size: 12.5px;
+  color: var(--text);
+  word-break: break-all;
+}
