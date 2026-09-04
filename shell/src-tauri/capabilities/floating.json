@@ -1,0 +1,11 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "floating",
+  "description": "KnowSeq 悬浮控件窗（T-504 / REQ-504）权限：窗口加载远程控制台页（http://127.0.0.1:8765/floating），仅放行从页面发起的窗口拖拽（data-tauri-drag-region → start-dragging），不含其他 IPC 能力。",
+  "windows": ["floating"],
+  "local": false,
+  "remote": {
+    "urls": ["http://127.0.0.1:8765"]
+  },
+  "permissions": ["core:window:allow-start-dragging"]
+}

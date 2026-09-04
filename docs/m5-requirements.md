@@ -80,6 +80,8 @@ M5 四条主线：
 | 适配点 | 退出语义分级：关窗/退出壳不停后端；彻底停止 = pystray 退出后端（现状入口保留）；配置参考 Meetily 关窗隐藏 #471 与防多实例 #476（Reference: Zackriya-Solutions/meetily (MIT)） |
 | 验收 | 关主窗后 `/api/status` 仍可达、采集不中断；壳托盘可重新唤出主窗；二次启动壳不产生第二实例（聚焦已有）；pystray 退出后端后壳侧提示后端离线 |
 
+> **验收记录（2026-09-04，T-503，真机四条全过）**：①**关窗隐藏后台常驻**——点主窗标题栏关闭 → `CloseRequested` 事件 `prevent_close()+hide()` 主窗消失；壳进程（pid 30744）存活、`/api/status` 仍可达（manager.running=True、素材数 36 不变=采集未中断）；EnumWindows 按 pid 枚举可见窗口仅剩悬浮控件与 SIW helper（主窗确已隐藏、非关闭）。②**壳托盘唤出主窗**——任务栏溢出区（「显示隐藏的图标」）点 KnowSeq 托盘按钮 → Win32 原生菜单弹出三项「显示主窗/悬浮控件/退出壳」，CheckMenuItem 勾选态与窗口实际可见性精确同步（主窗隐藏时「显示主窗」无勾、浮窗可见时「悬浮控件」勾上，`on_menu_event` 按 `is_visible()` 显式同步）；点「显示主窗」→ 主窗最大化回前台（EnumWindows rect (-8,-8) 1936x1048 最大化特征 + `GetForegroundWindow` 返回壳进程主窗句柄）。③**单实例**——再次启动 `knowseq-shell.exe`，4s 后 `Get-Process` 仍仅原进程（第二实例经 tauri-plugin-single-instance 退出并把焦点交还首实例，前台=主窗）。④**后端离线提示与恢复**——停后端进程 → probe 在线监测连续 2 次失败（低频期 ~15s）主窗自动导航 `http://tauri.localhost/?state=offline` 显示 fallback 离线页（K logo + 「与后端的连接已断开，采集已中断。请确认后端仍在运行（python run.py），恢复后本窗口会自动返回控制台。」+ spinner）；重启后端 → probe 成功自动导航回控制台（WebUI 完整渲染、采集状态 6 源）。验证方法论备注：Tauri 托盘菜单为 Win32 原生菜单，UIA 树不可见，以 PowerShell CopyFromScreen 截屏定位 + SendInput 物理点击完成操作；窗口隐藏/唤出以 EnumWindows 为权威验证。
+
 ## §4 REQ-504 悬浮开始/结束控件（T-504）
 
 | 项 | 内容 |
@@ -88,6 +90,10 @@ M5 四条主线：
 | 接口 | Tauri 第二窗口：`transparent + alwaysOnTop + decorations:false + skipTaskbar`；拖拽区域 `data-tauri-drag-region`；窗口加载 `http://127.0.0.1:8765/#/floating`——webui 新增极简 `/floating` 路由（两按钮 + 状态色点，复用 api.ts 与设计 tokens），保证 Origin 为本机从而通过 Host/Origin 校验；按钮调用既有 `POST /api/start\|stop/system_audio` |
 | 适配点 | 结束 = stop 源 + 收尾转写最后一段（REQ-501 语义）；按钮态与源状态联动（running/ stopped）；悬浮窗显隐由壳托盘菜单/快捷方式控制；不新增后端端点 |
 | 验收 | 悬浮按钮常驻所有窗口最前、可拖拽到任意位置；点「开始」→ `/api/status` 中 system_audio running、按钮态变化；点「结束」→ 最后一段收尾转写落库；任务栏无该窗口；透明背景无白底 |
+
+> **验收记录（2026-09-04，T-504，真机五条全过）**：①**常驻最前**——主窗最大化（rect 覆盖浮窗区域）时截屏可见浮窗叠于主窗内容之上（`alwaysOnTop` 生效）。②**可拖拽**——mcp drag 工具对非焦点窗口 image→screen 坐标映射失准（按窗口 origin=(0,0) 计算，落点错位）不适用；改 SendInput 物理拖拽（`SetCursorPos` 起点 + `mouse_event` DOWN/分步 move×5/UP），浮窗 (1760,249)→(1280,730) 位移与拖拽向量精确一致，EnumWindows 复核 L/T 落位无误。③**开始→running + 按钮态联动**——浮窗 toggle 两步 API（先 `POST /api/settings {system_audio_enabled:true}` 再 `POST /api/start/system_audio`），2s 状态轮询驱动 UI：标题「系统声音 · 采集中」+ 绿色状态点、「开始」禁用/「结束」可用，与 `/api/status` 中 system_audio running 一致。④**结束→收尾落库（机制全通，转写引擎崩溃定性记录）**——三次闭环实测（采集 107s/134s/269s 后点「结束」）：stop 触发 → 未满段收尾立即落盘（`inbox/.system_audio/` 三个收尾 wav 字节数 20,647,980/25,714,732/51,728,428 与时长精确对应）→ 入队转写（错误消息 Audio 路径指向收尾 wav，证明 `asr_infer` 被正确调用）→ 状态 stopped → 浮窗 UI 同步「已停止」+ 按钮翻转。三次收尾段转写均遇 VibeASR 引擎崩溃（exit 3221226505 / 0xC0000409 FAIL_FAST）——**定性非收尾链路缺陷**：收尾段与满段走完全相同 `_close_segment` 代码路径（T-501 已实证满段转写落库 36 条素材）、269s 接近满段时长排除时长因素；三次输入均为 Ring05.wav 提示音循环的高度重复音频，疑似引擎对重复内容的稳定性问题（T-501 期间 seg012 亦偶发崩溃一次）。落库链路有效性由 T-501 验收实证；引擎对重复音频崩溃留待后续对照实验（正常语音收尾段复验）。⑤**任务栏无窗 + 透明无白底**——`skipTaskbar` 生效（explorer 任务栏应用列表无浮窗按钮），透明背景 `useEffect` 置 html/body background=transparent 无白底闪现。
+>
+> **偏差补记（2026-09-04，T-504 实现时确认）**：接口栏所写 `/#/floating`（hash 路由）实为 `/floating`（BrowserRouter 路由 + FastAPI SPA fallback 兜底直达），WebView 加载 `http://127.0.0.1:8765/floating`，Origin 仍为本机通过 Host/Origin 校验（REQ-505 口子行为不变）。浮窗显隐由壳托盘菜单「悬浮控件」控制（CheckMenuItem 勾选态双向同步），需求栏「悬浮窗显隐由壳托盘菜单/快捷方式控制」取托盘菜单一路。
 
 ## §5 REQ-505 sidecar 演进口子（T-505）
 

@@ -36,5 +36,13 @@
       <p id="probe-status">正在连接 KnowSeq 后端…</p>
       <div class="spinner"></div>
     </div>
+    <script>
+      // T-503 离线监测：壳探测到后端断线后导航到 /?state=offline，
+      // 由本脚本把提示切换为离线文案（避免壳侧 eval 与页面加载竞态）
+      if (new URLSearchParams(location.search).get('state') === 'offline') {
+        document.getElementById('probe-status').textContent =
+          '与后端的连接已断开，采集已中断。请确认后端仍在运行（python run.py）；恢复后本窗口会自动返回控制台。';
+      }
+    </script>
   </body>
 </html>

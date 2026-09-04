@@ -1,7 +1,8 @@
-import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
+import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import AskPage from './pages/AskPage';
 import CapturePage from './pages/CapturePage';
 import CompilePage from './pages/CompilePage';
+import FloatingPage from './pages/FloatingPage';
 import GraphPage from './pages/GraphPage';
 import KnowledgePage from './pages/KnowledgePage';
 import MaterialsPage from './pages/MaterialsPage';
@@ -20,6 +21,12 @@ const NAV = [
 ];
 
 export default function App() {
+  const { pathname } = useLocation();
+  // 悬浮控件窗（T-504 / REQ-504）：裸渲染控件本体——不进 app-shell、
+  // 不挂 StatusProvider（避免控制台三路轮询在悬浮窗里重复跑）
+  if (pathname === '/floating') {
+    return <FloatingPage />;
+  }
   return (
     <StatusProvider>
       <div className="app-shell">

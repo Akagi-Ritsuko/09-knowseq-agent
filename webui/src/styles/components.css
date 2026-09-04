@@ -1334,3 +1334,49 @@ a.status-row:hover {
 .set-row:last-child {
   border-bottom: none;
 }
+
+/* ============================================================
+ * 悬浮控件（T-504 / REQ-504 /floating）：桌面壳透明置顶小窗本体
+ * 窗口 transparent，页面背景由 FloatingPage 置透明，此处仅画控件面板
+ * ============================================================ */
+.floating-root {
+  position: fixed;
+  inset: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: rgba(20, 22, 26, 0.92); /* --bg-panel 半透明 */
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-m);
+  user-select: none;
+}
+.floating-status {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 13px;
+  color: var(--text);
+}
+.floating-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-2);
+}
+.floating-dot.running {
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+.floating-dot.error {
+  background: var(--err);
+}
+.floating-actions {
+  display: flex;
+  gap: var(--sp-2);
+}
+.floating-actions .btn {
+  flex: 1;
+}

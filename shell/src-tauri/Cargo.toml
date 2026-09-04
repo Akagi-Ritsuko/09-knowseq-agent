@@ -8,7 +8,10 @@ description = "KnowSeq 桌面壳（Tauri 2，方案 A：加载本机控制台 UR
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [] }
+# tray-icon：壳托盘（T-503）；image-png：default_window_icon 解码托盘图标
+tauri = { version = "2", features = ["tray-icon", "image-png"] }
+# 单实例（T-503）：二次启动唤出已有实例，必须第一个注册
+tauri-plugin-single-instance = "2"
 
 [profile.release]
 strip = true

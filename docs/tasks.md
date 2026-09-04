@@ -105,8 +105,8 @@
 |---|---|---|---|---|---|
 | T-501 | 系统声音捕获源：`system_audio_source.py`（pyaudiowpatch WASAPI loopback 分段 wav → 复用 asr_infer 转写 → inbox/meeting，meta 标记 system-audio；config 三项/停止收尾/设备切换重建/采集页开关卡片） | REQ-501 | ADR-017/014 | T-012 | done（2026-09-04） |
 | T-502 | Tauri 壳骨架：`shell/` 工程、主窗加载 127.0.0.1:8765、后端探测未就绪提示页（前置：rustup + MSVC Build Tools） | REQ-502 | ADR-016 | T-012 | done（2026-09-04） |
-| T-503 | 桌面体验：关窗隐藏后台常驻、tauri-plugin-single-instance 防多实例、壳托盘（与 pystray 并存，职责分离） | REQ-503 | ADR-016 | T-012 | todo |
-| T-504 | 悬浮开始/结束控件：透明置顶无装饰小窗 + 拖拽、webui `/floating` 路由（Origin 本机过校验）、system_audio 启停联动 | REQ-504 | ADR-016/017 | T-012 | todo |
+| T-503 | 桌面体验：关窗隐藏后台常驻、tauri-plugin-single-instance 防多实例、壳托盘（与 pystray 并存，职责分离） | REQ-503 | ADR-016 | T-012 | done（2026-09-04） |
+| T-504 | 悬浮开始/结束控件：透明置顶无装饰小窗 + 拖拽、webui `/floating` 路由（Origin 本机过校验）、system_audio 启停联动 | REQ-504 | ADR-016/017 | T-012 | done（2026-09-04） |
 | T-505 | sidecar 演进口子：api.ts `VITE_API_BASE` 前缀位、server.py Host/Origin 迁移注释、tauri.conf.json externalBin 注释位（行为零变化） | REQ-505 | ADR-016 | T-012 | done（2026-09-04） |
 | T-506 | 注册表右键菜单：HKCU Directory\shell「纳入采集/立即结束」+ file_dirs 追加端点 + 设置页安装/卸载 | REQ-506 | ADR-011 | T-012 | todo |
 | T-507 | 开机自启：`app.autostart` + HKCU Run 键 + 设置页开关（自启对象=run.py 后端，不含壳；与 web.auto_start 区分） | REQ-507 | ADR-011 | T-012 | todo |
