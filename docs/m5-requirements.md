@@ -94,6 +94,8 @@ M5 四条主线：
 | 适配点 | 不改变任何现有请求路径与响应；三处口子均有注释指向 ADR-016 决策 4，B 方案启动时可检索 |
 | 验收 | 控制台全部请求行为与现状一致（回归：问答/图谱/采集/设置页正常）；代码检索可见三处口子注释；`VITE_API_BASE` 未设置时构建产物行为不变 |
 
+> **验收记录（2026-09-04，T-505）**：三处口子全部落地且互相指向 ADR-016 决策 4——①`webui/src/api.ts` `const API_BASE = import.meta.env.VITE_API_BASE ?? ''`（默认空串=相对路径，请求路径与现状一致）；②`app/web/server.py` Host/Origin 校验中间件处注释方案 B 迁移说明（WebView Origin 变为 `http://tauri.localhost` 时放行）；③`shell/src-tauri/tauri.conf.json` 占位骨架含 `externalBin` 注释位（PyInstaller 后端打包为 sidecar 子进程说明）。**行为零变化验证**：`npm run build` 通过（tsc + vite，新 bundle index-DAMhUBt-.js）+ `py_compile` server.py 通过 + `/` 托管新 bundle；浏览器回归四页全过——/ask（提问区/模式选择/状态栏）、/capture（六源卡片含系统声音「采集中·引擎就绪」、素材库）、/graph（337 节点 · 544 关系渲染 + 工具栏/图例）、/settings（六分组表单回显）；console 无当前 bundle 错误（历史累积日志均属旧构建与后端重启窗口期）。
+
 ## §6 REQ-506 注册表右键菜单（T-506）
 
 | 项 | 内容 |

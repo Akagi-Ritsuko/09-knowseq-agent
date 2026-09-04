@@ -1,0 +1,24 @@
+// KnowSeq 桌面壳配置骨架（T-505 预留口子，T-502 建 Rust 工程时补全完整字段）。
+// [ADR-016 决策 4 · 方案 B sidecar 演进口子] 方案 A（壳加载本机 URL）下后端为
+// 独立进程，本文件不启用 externalBin；迁移方案 B 时取消注释并把 Python 后端
+// （PyInstaller 产物）打包为 sidecar 子进程随壳启动，同时放行 tauri.localhost
+// Origin（见 app/web/server.py 校验处口子注释）与 VITE_API_BASE 前缀位
+// （见 webui/src/api.ts）。
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "KnowSeq",
+  "version": "0.1.0",
+  "identifier": "com.knowseq.shell",
+  "build": {},
+  "app": {
+    "windows": []
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis", "msi"],
+    // 方案 B sidecar 口子（ADR-016 决策 4）：启用时列出 PyInstaller 后端可执行文件
+    // （如 "externalBin": ["binaries/knowseq-backend"]），并在壳启动时 spawn 子进程。
+    // "externalBin": []
+    "icon": []
+  }
+}

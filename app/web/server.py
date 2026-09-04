@@ -117,6 +117,10 @@ def create_app(config, inbox, manager, compile_mgr=None, brain_mgr=None) -> Fast
     # ---- 本机访问限制（REQ-110）----
     # 只校验 Host 不够：跨站表单/multipart 的 Host 也是本机，
     # 所以带 Origin 且 Origin 不是本机的请求（simple request）一并拒绝。
+    # [ADR-016 决策 4 · 方案 B sidecar 演进口子] 迁移方案 B（壳内嵌 dist 经 Tauri
+    # 自定义协议访问）时 WebView Origin 变为 `http://tauri.localhost`，需在此放行
+    # （origin_host == "tauri.localhost" 视为本机）；现方案 A（壳直接加载
+    # http://127.0.0.1:8765）Origin 即本机，校验零改动。
     @app.middleware("http")
     async def local_only(request: Request, call_next):
         if not _is_local(_host_part(request.headers.get("host", ""))):
