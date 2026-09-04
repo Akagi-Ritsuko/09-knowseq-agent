@@ -68,6 +68,8 @@ cd /d <项目根>
 - 按设置页中各源开关（`sources.*.enabled`）自动开始采集。
 
 > 后台常驻：`run.py` 启动即带托盘，控制台窗口可最小化；`web.auto_start: true` 时启动即恢复采集。
+>
+> 运行无需任何构建：控制台前端（`app/web/dist`）已随项目分发、由后端直接托管；日常只跑这一条命令即可，Node 仅在前端改码重构建时才需要。换机/重装系统才需按第 2 节重装 Python 环境（模型文件在项目目录内，无需重新下载）。
 
 ### 3.2 开机自启（可选）
 
@@ -98,6 +100,11 @@ npm run tauri dev
 cd shell
 npm run tauri build
 ```
+
+**构建一次即可，日常无需再构建**（Node/Rust 仅构建时需要）。之后的启动方式二选一：
+
+- 安装 `shell/src-tauri/target/release/bundle/nsis/KnowSeq_0.1.0_x64-setup.exe`（或 MSI），从开始菜单启动「KnowSeq」；
+- 免安装直接运行 `shell/src-tauri/target/release/knowseq-shell.exe`。
 
 壳的行为：
 
