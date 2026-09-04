@@ -16,10 +16,12 @@
 | [docs/tasks.md](docs/tasks.md) | 任务进度追踪（当前状态第一入口） |
 | [docs/changelog.md](docs/changelog.md) | 变更日志（每次修改留痕） |
 | [docs/adr/](docs/adr/) | 架构决策记录（ADR-001 ~ ADR-017） |
+| [thesis/](thesis/) | 毕业论文工作稿：outline（大纲与素材映射）、ch01~ch07、abstract（中英摘要）、references（参考文献） |
 
 ## 当前状态速览
 
-- **里程碑**：M4（交互层）已完成（2026-09-03）；M5（桌面化 + 会议实时捕获 + Windows 集成完善 + 演示打磨）规划就绪（2026-09-04，实施未开始，前置 Rust 工具链）；阶段规划见 [milestones.md](docs/milestones.md)
+- **里程碑**：M0~M5 已全部完成（M5 桌面化 + 会议实时捕获 + Windows 集成于 2026-09-04 验收关闭）；阶段规划与验收记录见 [milestones.md](docs/milestones.md)
+- **论文**：七章初稿已完成（2026-09-05，见 [thesis/](thesis/) 与 [tasks.md](docs/tasks.md) 论文撰写节）
 - **近期变更**：见 [changelog.md](docs/changelog.md)
 - **待办入口**：见 [tasks.md](docs/tasks.md)
 
