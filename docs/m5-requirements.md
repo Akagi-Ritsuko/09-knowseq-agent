@@ -117,6 +117,10 @@ M5 四条主线：
 | 适配点 | 纳入采集 = `sources.file.dirs` 追加 + start file 源（持久化到 config.yaml，对齐设置页 file_dirs 语义）；安装/卸载右键菜单做成设置页按钮或脚本（写/删注册表键） |
 | 验收 | 右键文件夹 → 纳入采集 → 该目录变更进入 `inbox/file/`（file 源 running）；「立即结束」停止全部采集；设置页 file_dirs 与右键添加的目录一致；卸载后注册表项清除 |
 
+> **验收记录（2026-09-04，T-506，全部通过）**：①安装：设置页「安装右键菜单」→ HKCU\Software\Classes\Directory\shell\KnowSeq.Capture（默认值「纳入 KnowSeq 采集」）/KnowSeq.Stop（「立即结束采集」）两键写入，command 均指向 `scripts/context_menu.py`（pythonw 静默执行，免管理员）；②触发器等效验证：`context_menu.py capture <dir>` → POST /api/file_dirs/append → config.yaml `sources.file.dirs` 持久化 + file 源自动重启生效（FileSource 仅 start() 时 schedule watched_dirs，ADR-006 约束）；`context_menu.py stop` → POST /api/stop_all 六源全停；③右键「纳入 KnowSeq 采集」真机全链路：explorer 窗口 SendInput 右键 test2 → Win11 新式菜单「显示更多选项」→ 经典菜单点击 → file_dirs=[test,test2]（与设置页/API 一致）→ file 源 running → 投放 right-click-note2.md 增量入库（materials 38→39，watchdog 建立监听前已存在文件不回扫，增量语义符合 ADR-006）；④右键「立即结束采集」真机：六源全部 stopped；⑤卸载：uninstall → 两键清除 → 再 install 恢复（最终态=已安装）。
+>
+> **偏差补记（2026-09-04，T-506）**：①**SDK 右键缺陷与替代验收法**——SDK `click(element_id, button="right")` 两次均映射到 screen(0,0)（element→屏幕坐标换算失效）且纯坐标模式被 schema `required=["element_id"]` 拒绝，改用 Win32 SendInput 屏幕坐标法完成真机验收（EnumWindows 取 explorer 窗口 → GetWindowRect 比例换算 → SetForegroundWindow → mouse_event；前置坑：explorer 非前台时右键首击仅激活窗口不弹菜单）。②`POST /api/stop_all` 为 `/api/stop` 的语义命名别名（同调 `manager.stop_all()`），供右键触发器使用、自文档化。③顺带修复 T-501 遗留：设置页 `SOURCE_LABEL` 缺 `system_audio`（显示为原始键名）且保存 body 缺 `system_audio_enabled`（开关不落盘）；原「开机自启（托盘随系统启动）」label 实为 `web.auto_start` 语义，更名为「启动时自动开始采集」并与 T-507 新增自启开关区分。
+
 ## §7 REQ-507 开机自启（T-507）
 
 | 项 | 内容 |
@@ -125,6 +129,10 @@ M5 四条主线：
 | 接口 | config 新增 `app.autostart`（默认 false）+ settings API 字段（校验先行，对齐 T-410 范式）+ 设置页"系统"分组开关；实现 = HKCU\Software\Microsoft\Windows\CurrentVersion\Run 写/删 `KnowSeq` 项（pythonw 静默启动 run.py，工作目录对齐项目根） |
 | 适配点 | 与既有 `web.auto_start`（启动即开采集，D6 区分说明）互不影响——自启后是否立即开采集仍由 web.auto_start 决定；无需管理员权限 |
 | 验收 | 开启开关 → 注册表键写入 → 重启系统后后端自动运行（托盘在、8765 可达）；关闭开关 → 键删除 → 重启不再自启；重启系统后采集行为符合 web.auto_start 配置 |
+
+> **验收记录（2026-09-04，T-507）**：①开启开关（默认 false）→ settings API `POST {"autostart":true}` → HKCU Run 键写入实证：`KnowSeq REG_SZ "…\.venv\Scripts\pythonw.exe" "…\run.py"`（pythonw 静默启动 run.py，D6 自启对象=后端含托盘）；②**等效开机执行通过**（模拟登录会话环境直接执行 Run 键等价命令）：`Start-Process pythonw run.py` → 8765 LISTENING + `/api/status` 正常 + pystray 托盘在 + 六源 running（`web.auto_start=true` 行为符合）；③关闭开关 → Run 键删除（reg query 报「找不到指定的注册表项或值」）。真重启验证（REQ-507 验收第 1/2 条的「重启系统后」环节）留 T-509 端到端验收补做。
+>
+> **偏差补记（2026-09-04，T-507，run.py pythonw 适配修复）**：等效开机执行排障发现 run.py 在 pythonw（无控制台，`sys.stdin/stdout/stderr` 全为 None）下两处崩溃——①`faulthandler.enable()` 依赖 stderr 抛 `RuntimeError: sys.stderr is None`；②修复①后仍 8765 不可达，py-spy dump 证实 uvicorn serve 线程静默死亡：uvicorn `ColourizedFormatter`（logging.py）在 `use_colors=None` 默认路径调用 `sys.stdout.isatty()`，stdout=None 抛 AttributeError，daemon 线程异常写到 None stderr 无处可去（其余线程健康、六源/托盘照常启动）。修复：run.py 入口层在 std 流为 None 时替换为 `os.devnull` 全局兜底（uvicorn/tqdm 等库均受益），`main.py` 零改动；另确认 venv `pythonw.exe` 为 launcher、spawn 系统真身双进程属正常结构，启动耗时约 30s（探活勿过早）。诊断产物 py-spy 已装入 venv。
 
 ## §8 REQ-508 演示数据与演示脚本（T-508）
 

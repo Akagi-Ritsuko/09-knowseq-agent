@@ -6,6 +6,7 @@ API（状态/触发/review/knowledge 浏览/lint/dedup/enrich）。
 完整交互层（问答/图谱/知识管理）属 M4（ADR-010）。
 """
 import ipaddress
+import os
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -16,6 +17,7 @@ from pydantic import BaseModel
 
 from ..compile.indexer import update_index
 from ..compile.schema import CATEGORIES
+from .. import win_integration
 
 DIST_DIR = Path(__file__).resolve().parent / "dist"  # M4 React 前端构建产物（webui build 输出）
 
@@ -46,6 +48,10 @@ class ImportTextReq(BaseModel):
 
 class WebIngestReq(BaseModel):
     url: str
+
+
+class FileDirsAppendReq(BaseModel):
+    dir: str
 
 
 def _check_url(value: str, label: str) -> str:
@@ -79,6 +85,8 @@ class SettingsReq(BaseModel):
     brain_llm_base_url: str | None = None
     brain_llm_model: str | None = None
     llm_api_key: str | None = None
+    # T-507 REQ-507：登录 Windows 自启 run.py（写入即同步 HKCU Run 键）
+    autostart: bool | None = None
 
 
 class CompileTriggerReq(BaseModel):
@@ -168,6 +176,52 @@ def create_app(config, inbox, manager, compile_mgr=None, brain_mgr=None) -> Fast
         except ValueError as e:
             raise HTTPException(status_code=404, detail=str(e)) from e
         return {"ok": True, "status": manager.get_status()}
+
+    # ---- Windows 集成（T-506 REQ-506：右键菜单触发入口）----
+    @app.post("/api/file_dirs/append")
+    def file_dirs_append(req: FileDirsAppendReq):
+        """右键「纳入采集」：追加监听目录并持久化；file 源 running 时重启使其生效
+        （FileSource 仅在 start() 时 schedule watched_dirs，见 ADR-006 实现约束）。"""
+        raw = (req.dir or "").strip().strip('"')
+        if not raw:
+            raise HTTPException(status_code=422, detail="目录不能为空")
+        d = Path(raw)
+        if not d.is_dir():
+            raise HTTPException(status_code=422, detail=f"目录不存在：{raw}")
+        stored = str(d)
+        dirs = [str(x) for x in (config.get("sources.file.dirs") or [])]
+        if not any(os.path.normcase(x) == os.path.normcase(stored) for x in dirs):
+            dirs.append(stored)
+            config.set("sources.file.dirs", dirs)
+            config.save()
+        restarted = False
+        if manager.get("file").status == "running":
+            manager.stop_one("file")
+            manager.start_one("file")
+            restarted = True
+        return {"ok": True, "dir": stored, "dirs": dirs, "restarted": restarted}
+
+    @app.post("/api/stop_all")
+    def stop_all():
+        """右键「立即结束采集」：停止全部采集源（与 /api/stop 同义，语义命名入口）。"""
+        manager.stop_all()
+        return {"ok": True, "status": manager.get_status()}
+
+    @app.post("/api/context_menu/install")
+    def context_menu_install():
+        try:
+            win_integration.install_context_menu()
+        except OSError as e:
+            raise HTTPException(status_code=500, detail=f"注册表写入失败：{e}") from e
+        return {"ok": True, "installed": True}
+
+    @app.post("/api/context_menu/uninstall")
+    def context_menu_uninstall():
+        try:
+            win_integration.uninstall_context_menu()
+        except OSError as e:
+            raise HTTPException(status_code=500, detail=f"注册表删除失败：{e}") from e
+        return {"ok": True, "installed": False}
 
     # ---- 手动导入（REQ-109） ----
     @app.post("/api/import")
@@ -262,6 +316,10 @@ def create_app(config, inbox, manager, compile_mgr=None, brain_mgr=None) -> Fast
                 "llm_model": config.get("brain.llm.model", ""),
             },
             "llm_key_configured": bool(config.secret("LLM_API_KEY")),
+            # T-506/T-507：Windows 集成状态（installed 以注册表实际状态为准）
+            "autostart": config.get("app.autostart", False),
+            "autostart_installed": win_integration.autostart_installed(),
+            "context_menu_installed": win_integration.context_menu_installed(),
         }
 
     @app.post("/api/settings")
@@ -316,6 +374,13 @@ def create_app(config, inbox, manager, compile_mgr=None, brain_mgr=None) -> Fast
             config.set("brain.llm.model", req.brain_llm_model.strip())
         if req.llm_api_key:
             config.set_env("LLM_API_KEY", req.llm_api_key.strip())
+        # T-507：自启注册表先行（失败 500 时 config 未变，保持"不做部分写入"）
+        if req.autostart is not None:
+            try:
+                win_integration.set_autostart(bool(req.autostart))
+            except OSError as e:
+                raise HTTPException(status_code=500, detail=f"开机自启写入失败：{e}") from e
+            config.set("app.autostart", bool(req.autostart))
         config.save()
         return {"ok": True, "settings": settings()}
 

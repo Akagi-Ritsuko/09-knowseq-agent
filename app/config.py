@@ -15,6 +15,9 @@ ROOT = Path(__file__).resolve().parent.parent
 
 DEFAULTS: dict = {
     "web": {"port": 8765, "auto_start": True},
+    # T-507 REQ-507：登录 Windows 自启 run.py（HKCU Run 键），与 web.auto_start
+    # （后端启动时是否自动开始采集）互不影响
+    "app": {"autostart": False},
     "paths": {"inbox_dir": "inbox", "drop_dir": "drop", "knowledge_dir": "knowledge"},
     "compile": {
         "enabled": True,

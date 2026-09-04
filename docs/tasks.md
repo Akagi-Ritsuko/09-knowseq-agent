@@ -108,8 +108,8 @@
 | T-503 | 桌面体验：关窗隐藏后台常驻、tauri-plugin-single-instance 防多实例、壳托盘（与 pystray 并存，职责分离） | REQ-503 | ADR-016 | T-012 | done（2026-09-04） |
 | T-504 | 悬浮开始/结束控件：透明置顶无装饰小窗 + 拖拽、webui `/floating` 路由（Origin 本机过校验）、system_audio 启停联动 | REQ-504 | ADR-016/017 | T-012 | done（2026-09-04） |
 | T-505 | sidecar 演进口子：api.ts `VITE_API_BASE` 前缀位、server.py Host/Origin 迁移注释、tauri.conf.json externalBin 注释位（行为零变化） | REQ-505 | ADR-016 | T-012 | done（2026-09-04） |
-| T-506 | 注册表右键菜单：HKCU Directory\shell「纳入采集/立即结束」+ file_dirs 追加端点 + 设置页安装/卸载 | REQ-506 | ADR-011 | T-012 | todo |
-| T-507 | 开机自启：`app.autostart` + HKCU Run 键 + 设置页开关（自启对象=run.py 后端，不含壳；与 web.auto_start 区分） | REQ-507 | ADR-011 | T-012 | todo |
+| T-506 | 注册表右键菜单：HKCU Directory\shell「纳入采集/立即结束」+ file_dirs 追加端点 + 设置页安装/卸载 | REQ-506 | ADR-011 | T-012 | done（2026-09-04） |
+| T-507 | 开机自启：`app.autostart` + HKCU Run 键 + 设置页开关（自启对象=run.py 后端，不含壳；与 web.auto_start 区分） | REQ-507 | ADR-011 | T-012 | done（2026-09-04） |
 | T-508 | 演示数据与演示脚本：`scripts/demo/` 全链路演示（采集→编译→问答/图谱）+ 清理模式 | REQ-508 | — | T-012 | todo |
 | T-509 | M5 端到端验收（m5-requirements §11 清单）+ 文档同步（changelog/tasks/milestones，M5 关闭） | REQ-509 / §11 | — | M5 收尾 | todo |
 

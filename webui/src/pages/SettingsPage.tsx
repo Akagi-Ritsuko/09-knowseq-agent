@@ -29,6 +29,9 @@ interface Settings {
     llm_model: string;
   };
   llm_key_configured: boolean;
+  autostart: boolean;
+  autostart_installed: boolean;
+  context_menu_installed: boolean;
 }
 
 interface FormState {
@@ -47,10 +50,12 @@ interface FormState {
   brainLlmModel: string;
   feishuAppId: string;
   feishuAppSecret: string;
+  autostart: boolean;
 }
 
 const SOURCE_LABEL: Record<string, string> = {
   meeting: '会议转写',
+  system_audio: '系统声音',
   clipboard: '剪贴板',
   feishu: '飞书',
   file: '文件',
@@ -74,6 +79,7 @@ function applySettings(s: Settings): FormState {
     brainLlmModel: s.brain.llm_model,
     feishuAppId: '',
     feishuAppSecret: '',
+    autostart: s.autostart,
   };
 }
 
@@ -86,6 +92,8 @@ export default function SettingsPage() {
   const [loadErr, setLoadErr] = useState('');
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
   const [saving, setSaving] = useState(false);
+  const [ctxBusy, setCtxBusy] = useState(false);
+  const [ctxInstalled, setCtxInstalled] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -96,6 +104,7 @@ export default function SettingsPage() {
         setKeyConfigured(s.llm_key_configured);
         setDropDir(s.drop_dir);
         setFeishuConfigured(s.feishu_configured);
+        setCtxInstalled(s.context_menu_installed);
       })
       .catch((e) => {
         if (!cancelled) setLoadErr(e instanceof Error ? e.message : '设置加载失败');
@@ -139,6 +148,7 @@ export default function SettingsPage() {
         web_port: Number(form.webPort),
         auto_start: form.autoStart,
         meeting_enabled: form.sources.meeting,
+        system_audio_enabled: form.sources.system_audio,
         clipboard_enabled: form.sources.clipboard,
         feishu_enabled: form.sources.feishu,
         file_enabled: form.sources.file,
@@ -153,6 +163,7 @@ export default function SettingsPage() {
         brain_embedding_model: form.brainEmbeddingModel,
         brain_llm_base_url: form.brainLlmBaseUrl,
         brain_llm_model: form.brainLlmModel,
+        autostart: form.autostart,
       };
       // 敏感项：留空 = 保持不变
       if (llmKey.trim()) body.llm_api_key = llmKey.trim();
@@ -165,12 +176,31 @@ export default function SettingsPage() {
       setForm(applySettings(r.settings));
       setKeyConfigured(r.settings.llm_key_configured);
       setFeishuConfigured(r.settings.feishu_configured);
+      setCtxInstalled(r.settings.context_menu_installed);
       setLlmKey('');
       setNote({ ok: true, text: '设置已保存。Web 端口、编译/大脑 LLM、Embedding 等项重启服务后生效。' });
     } catch (e) {
       setNote({ ok: false, text: e instanceof Error ? e.message : '保存失败' });
     } finally {
       setSaving(false);
+    }
+  }
+
+  /** T-506：安装/卸载资源管理器右键菜单（独立于「保存设置」，即时生效）。 */
+  async function toggleCtxMenu(install: boolean) {
+    setCtxBusy(true);
+    setNote(null);
+    try {
+      await api<{ ok: boolean }>(`/api/context_menu/${install ? 'install' : 'uninstall'}`, {
+        method: 'POST',
+        body: '{}',
+      });
+      setCtxInstalled(install);
+      setNote({ ok: true, text: install ? '右键菜单已安装，即刻可在文件夹右键使用。' : '右键菜单已卸载。' });
+    } catch (e) {
+      setNote({ ok: false, text: e instanceof Error ? e.message : '操作失败' });
+    } finally {
+      setCtxBusy(false);
     }
   }
 
@@ -447,9 +477,43 @@ export default function SettingsPage() {
             />
           </div>
           <div className="set-row">
-            <span>开机自启（托盘随系统启动）</span>
-            {switchEl(form.autoStart, (v) => set('autoStart', v), '开机自启')}
+            <span>启动时自动开始采集</span>
+            {switchEl(form.autoStart, (v) => set('autoStart', v), '启动时自动开始采集')}
           </div>
+        </div>
+
+        {/* ---- 系统（T-506/T-507） ---- */}
+        <div className="panel">
+          <h2 className="panel-title">
+            系统
+            <small>登录自启与资源管理器右键集成（Windows，HKCU 免管理员）</small>
+          </h2>
+          <div className="set-row">
+            <span>开机自动启动（登录后静默运行托盘与控制台）</span>
+            {switchEl(form.autostart, (v) => set('autostart', v), '开机自动启动')}
+          </div>
+          <div className="field">
+            <span className="field-label">
+              文件夹右键菜单{' '}
+              {ctxInstalled ? (
+                <span className="chip chip-sm chip-ok">已安装</span>
+              ) : (
+                <span className="chip chip-sm chip-warn">未安装</span>
+              )}
+            </span>
+          </div>
+          <div className="toolbar">
+            <button type="button" className="btn" disabled={ctxBusy} onClick={() => void toggleCtxMenu(true)}>
+              安装右键菜单
+            </button>
+            <button type="button" className="btn" disabled={ctxBusy} onClick={() => void toggleCtxMenu(false)}>
+              卸载右键菜单
+            </button>
+          </div>
+          <p className="status-note">
+            右键任意文件夹可「纳入 KnowSeq 采集」（目录加入监听并开始采集）/「立即结束采集」（停止全部源）；
+            自启开关保存后写入注册表，即时生效。
+          </p>
         </div>
       </div>
     </section>
