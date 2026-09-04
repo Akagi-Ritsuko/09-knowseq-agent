@@ -1,0 +1,331 @@
+{
+  "meta": {
+    "date": "2026-09-05 01:45:35",
+    "base": "http://127.0.0.1:8765",
+    "index": "智慧大棚演示 4 份种子素材编译 11 条知识条目后增量索引（同一索引）",
+    "llm": "deepseek-v4-flash（火山方舟）",
+    "embedding": "bge-small-zh-v1.5（本地 CPU）",
+    "top_k": 6,
+    "note": "每组问答单次实测；demo_hit 为引用条目属于演示产出条目的命中数"
+  },
+  "results": [
+    {
+      "elapsed_s": 25.17,
+      "answer_chars": 1118,
+      "context_count": 6,
+      "refs": [
+        "decisions/smart-greenhouse-d2026-001-communication-plan.md",
+        "concepts/smart-greenhouse-lora-communication.md",
+        "concepts/smart-greenhouse-lora-architecture.md",
+        "decisions/smart-greenhouse-d2026-001-communication.md",
+        "concepts/lora-nbiot-selection-comparison.md",
+        "concepts/lora-nbiot-selection-comparison.md"
+      ],
+      "demo_hit_count": 3,
+      "demo_hits": [
+        "concepts/lora-nbiot-selection-comparison.md",
+        "concepts/smart-greenhouse-lora-architecture.md",
+        "decisions/smart-greenhouse-d2026-001-communication-plan.md"
+      ],
+      "qid": "Q1",
+      "mode": "naive",
+      "error": ""
+    },
+    {
+      "elapsed_s": 21.87,
+      "answer_chars": 630,
+      "context_count": 4,
+      "refs": [
+        "concepts/lora-nbiot-selection-comparison.md",
+        "connections/lora-vs-nbiot-scenario-fit.md",
+        "concepts/edge-gateway-inference-location-decision.md",
+        "queries/edge-gateway-model-update-mechanism.md"
+      ],
+      "demo_hit_count": 1,
+      "demo_hits": [
+        "concepts/lora-nbiot-selection-comparison.md"
+      ],
+      "qid": "Q1",
+      "mode": "local",
+      "error": ""
+    },
+    {
+      "elapsed_s": 22.88,
+      "answer_chars": 1142,
+      "context_count": 6,
+      "refs": [
+        "decisions/smart-greenhouse-d2026-001-communication-plan.md",
+        "concepts/smart-greenhouse-lora-communication.md",
+        "concepts/smart-greenhouse-lora-architecture.md",
+        "decisions/smart-greenhouse-d2026-001-communication.md",
+        "concepts/lora-nbiot-selection-comparison.md",
+        "concepts/lora-nbiot-selection-comparison.md"
+      ],
+      "demo_hit_count": 3,
+      "demo_hits": [
+        "concepts/lora-nbiot-selection-comparison.md",
+        "concepts/smart-greenhouse-lora-architecture.md",
+        "decisions/smart-greenhouse-d2026-001-communication-plan.md"
+      ],
+      "qid": "Q1",
+      "mode": "global",
+      "error": ""
+    },
+    {
+      "elapsed_s": 0.07,
+      "answer_chars": 525,
+      "context_count": 6,
+      "refs": [
+        "decisions/smart-greenhouse-d2026-001-communication-plan.md",
+        "concepts/smart-greenhouse-lora-communication.md",
+        "concepts/smart-greenhouse-lora-architecture.md",
+        "decisions/smart-greenhouse-d2026-001-communication.md",
+        "concepts/lora-nbiot-selection-comparison.md",
+        "concepts/lora-nbiot-selection-comparison.md"
+      ],
+      "demo_hit_count": 3,
+      "demo_hits": [
+        "concepts/lora-nbiot-selection-comparison.md",
+        "concepts/smart-greenhouse-lora-architecture.md",
+        "decisions/smart-greenhouse-d2026-001-communication-plan.md"
+      ],
+      "qid": "Q1",
+      "mode": "hybrid",
+      "error": ""
+    },
+    {
+      "elapsed_s": 28.59,
+      "answer_chars": 1115,
+      "context_count": 6,
+      "refs": [
+        "decisions/smart-greenhouse-d2026-001-communication-plan.md",
+        "concepts/smart-greenhouse-lora-communication.md",
+        "concepts/smart-greenhouse-lora-architecture.md",
+        "decisions/smart-greenhouse-d2026-001-communication.md",
+        "concepts/lora-nbiot-selection-comparison.md",
+        "concepts/lora-nbiot-selection-comparison.md"
+      ],
+      "demo_hit_count": 3,
+      "demo_hits": [
+        "concepts/lora-nbiot-selection-comparison.md",
+        "concepts/smart-greenhouse-lora-architecture.md",
+        "decisions/smart-greenhouse-d2026-001-communication-plan.md"
+      ],
+      "qid": "Q1",
+      "mode": "mix",
+      "error": ""
+    },
+    {
+      "elapsed_s": 18.02,
+      "answer_chars": 1027,
+      "context_count": 6,
+      "refs": [
+        "queries/greenhouse-temperature-alarm-incident-authenticity.md",
+        "concepts/alarm-hysteresis-and-frequency-limit-design.md",
+        "concepts/edge-gateway-inference-placement-question.md",
+        "concepts/alarm-trust-vs-sensitivity.md",
+        "concepts/greenhouse-alarm-hysteresis-rate-limit.md",
+        "lessons/alarm-credibility-over-sensitivity.md"
+      ],
+      "demo_hit_count": 4,
+      "demo_hits": [
+        "concepts/alarm-hysteresis-and-frequency-limit-design.md",
+        "concepts/alarm-trust-vs-sensitivity.md",
+        "concepts/edge-gateway-inference-placement-question.md",
+        "queries/greenhouse-temperature-alarm-incident-authenticity.md"
+      ],
+      "qid": "Q2",
+      "mode": "naive",
+      "error": ""
+    },
+    {
+      "elapsed_s": 49.17,
+      "answer_chars": 925,
+      "context_count": 4,
+      "refs": [
+        "concepts/alarm-hysteresis-and-frequency-limit-design.md",
+        "concepts/greenhouse-alarm-hysteresis-rate-limit.md",
+        "lessons/alarm-credibility-over-sensitivity.md",
+        "concepts/alarm-trust-vs-sensitivity.md"
+      ],
+      "demo_hit_count": 2,
+      "demo_hits": [
+        "concepts/alarm-hysteresis-and-frequency-limit-design.md",
+        "concepts/alarm-trust-vs-sensitivity.md"
+      ],
+      "qid": "Q2",
+      "mode": "local",
+      "error": ""
+    },
+    {
+      "elapsed_s": 26.86,
+      "answer_chars": 1286,
+      "context_count": 6,
+      "refs": [
+        "concepts/alarm-hysteresis-and-frequency-limit-design.md",
+        "lessons/alarm-credibility-over-sensitivity.md",
+        "concepts/alarm-hysteresis-and-frequency-limit-design.md",
+        "concepts/alarm-trust-vs-sensitivity.md",
+        "concepts/sensor-placement-accuracy.md",
+        "concepts/vibeasr-decoding-failure-223943-seg005.md"
+      ],
+      "demo_hit_count": 2,
+      "demo_hits": [
+        "concepts/alarm-hysteresis-and-frequency-limit-design.md",
+        "concepts/alarm-trust-vs-sensitivity.md"
+      ],
+      "qid": "Q2",
+      "mode": "global",
+      "error": ""
+    },
+    {
+      "elapsed_s": 37.42,
+      "answer_chars": 1499,
+      "context_count": 6,
+      "refs": [
+        "queries/greenhouse-temperature-alarm-incident-authenticity.md",
+        "concepts/alarm-hysteresis-and-frequency-limit-design.md",
+        "concepts/alarm-trust-vs-sensitivity.md",
+        "concepts/greenhouse-alarm-hysteresis-rate-limit.md",
+        "lessons/alarm-credibility-over-sensitivity.md",
+        "concepts/alarm-trust-vs-sensitivity.md"
+      ],
+      "demo_hit_count": 3,
+      "demo_hits": [
+        "concepts/alarm-hysteresis-and-frequency-limit-design.md",
+        "concepts/alarm-trust-vs-sensitivity.md",
+        "queries/greenhouse-temperature-alarm-incident-authenticity.md"
+      ],
+      "qid": "Q2",
+      "mode": "hybrid",
+      "error": ""
+    },
+    {
+      "elapsed_s": 26.41,
+      "answer_chars": 1070,
+      "context_count": 6,
+      "refs": [
+        "queries/greenhouse-temperature-alarm-incident-authenticity.md",
+        "concepts/alarm-hysteresis-and-frequency-limit-design.md",
+        "concepts/greenhouse-alarm-hysteresis-rate-limit.md",
+        "concepts/edge-gateway-inference-placement-question.md",
+        "lessons/alarm-credibility-over-sensitivity.md",
+        "concepts/alarm-trust-vs-sensitivity.md"
+      ],
+      "demo_hit_count": 4,
+      "demo_hits": [
+        "concepts/alarm-hysteresis-and-frequency-limit-design.md",
+        "concepts/alarm-trust-vs-sensitivity.md",
+        "concepts/edge-gateway-inference-placement-question.md",
+        "queries/greenhouse-temperature-alarm-incident-authenticity.md"
+      ],
+      "qid": "Q2",
+      "mode": "mix",
+      "error": ""
+    },
+    {
+      "elapsed_s": 10.72,
+      "answer_chars": 864,
+      "context_count": 6,
+      "refs": [
+        "concepts/edge-gateway-inference-placement-question.md",
+        "concepts/edge-gateway-inference-location-decision.md",
+        "queries/edge-gateway-hardware-benchmark-pending.md",
+        "concepts/edge-gateway-inference-placement-question.md",
+        "queries/edge-gateway-4core-arm-inference-feasibility.md",
+        "concepts/edge-gateway-inference-location-decision.md"
+      ],
+      "demo_hit_count": 2,
+      "demo_hits": [
+        "concepts/edge-gateway-inference-placement-question.md",
+        "queries/edge-gateway-hardware-benchmark-pending.md"
+      ],
+      "qid": "Q3",
+      "mode": "naive",
+      "error": ""
+    },
+    {
+      "elapsed_s": 58.69,
+      "answer_chars": 1348,
+      "context_count": 5,
+      "refs": [
+        "concepts/edge-gateway-inference-placement-question.md",
+        "concepts/edge-gateway-inference-location-decision.md",
+        "queries/edge-gateway-4core-arm-inference-feasibility.md",
+        "concepts/edge-gateway-inference-location-decision.md",
+        "queries/edge-gateway-multi-greenhouse-collaboration.md"
+      ],
+      "demo_hit_count": 1,
+      "demo_hits": [
+        "concepts/edge-gateway-inference-placement-question.md"
+      ],
+      "qid": "Q3",
+      "mode": "local",
+      "error": ""
+    },
+    {
+      "elapsed_s": 41.44,
+      "answer_chars": 1134,
+      "context_count": 6,
+      "refs": [
+        "concepts/edge-gateway-inference-placement-question.md",
+        "concepts/edge-gateway-inference-location-decision.md",
+        "queries/edge-gateway-hardware-benchmark-pending.md",
+        "concepts/edge-gateway-inference-placement-question.md",
+        "queries/edge-gateway-4core-arm-inference-feasibility.md",
+        "concepts/smart-greenhouse-lora-architecture.md"
+      ],
+      "demo_hit_count": 3,
+      "demo_hits": [
+        "concepts/edge-gateway-inference-placement-question.md",
+        "concepts/smart-greenhouse-lora-architecture.md",
+        "queries/edge-gateway-hardware-benchmark-pending.md"
+      ],
+      "qid": "Q3",
+      "mode": "global",
+      "error": ""
+    },
+    {
+      "elapsed_s": 33.43,
+      "answer_chars": 1208,
+      "context_count": 6,
+      "refs": [
+        "concepts/edge-gateway-inference-placement-question.md",
+        "concepts/edge-gateway-inference-location-decision.md",
+        "queries/edge-gateway-hardware-benchmark-pending.md",
+        "concepts/edge-gateway-inference-placement-question.md",
+        "queries/edge-gateway-4core-arm-inference-feasibility.md",
+        "concepts/edge-gateway-inference-location-decision.md"
+      ],
+      "demo_hit_count": 2,
+      "demo_hits": [
+        "concepts/edge-gateway-inference-placement-question.md",
+        "queries/edge-gateway-hardware-benchmark-pending.md"
+      ],
+      "qid": "Q3",
+      "mode": "hybrid",
+      "error": ""
+    },
+    {
+      "elapsed_s": 38.11,
+      "answer_chars": 1150,
+      "context_count": 6,
+      "refs": [
+        "concepts/edge-gateway-inference-placement-question.md",
+        "concepts/edge-gateway-inference-location-decision.md",
+        "queries/edge-gateway-hardware-benchmark-pending.md",
+        "concepts/edge-gateway-inference-placement-question.md",
+        "queries/edge-gateway-4core-arm-inference-feasibility.md",
+        "concepts/edge-gateway-inference-location-decision.md"
+      ],
+      "demo_hit_count": 2,
+      "demo_hits": [
+        "concepts/edge-gateway-inference-placement-question.md",
+        "queries/edge-gateway-hardware-benchmark-pending.md"
+      ],
+      "qid": "Q3",
+      "mode": "mix",
+      "error": ""
+    }
+  ]
+}
