@@ -67,7 +67,9 @@
 .chip {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  min-width: 64px;
   padding: 3px 10px;
   border-radius: 999px;
   border: 1px solid var(--border-strong);
@@ -136,6 +138,7 @@
   padding: 8px 10px;
   border-bottom: 1px solid var(--border);
   vertical-align: middle;
+  overflow-wrap: anywhere;
 }
 .table tbody tr:last-child td {
   border-bottom: none;
@@ -542,6 +545,7 @@
   font-family: var(--font-mono);
   font-size: 12px;
   color: var(--text-2);
+  overflow-wrap: anywhere;
 }
 
 /* ============================================================
@@ -869,6 +873,7 @@ a.status-row:hover {
 .chip-sm {
   padding: 1px 8px;
   font-size: 11px;
+  min-width: 0;
 }
 .chip-broken {
   border-style: dashed;

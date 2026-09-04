@@ -2,7 +2,7 @@ web:
   port: 8765
   auto_start: true
 app:
-  autostart: false
+  autostart: true
 paths:
   inbox_dir: inbox
   drop_dir: drop

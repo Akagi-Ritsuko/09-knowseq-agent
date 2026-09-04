@@ -8,6 +8,7 @@
 
 | 文档 | 一句话用途 |
 |---|---|
+| [docs/user-guide.md](docs/user-guide.md) | **使用指南：安装、启动、各功能页与采集源用法（面向使用者）** |
 | [docs/ai-collab.md](docs/ai-collab.md) | AI 协作约定：如何读文档、每次改动必须同步更新哪些文档 |
 | [docs/prd.md](docs/prd.md) | 需求规格：功能清单、范围边界、验收标准 |
 | [docs/architecture.md](docs/architecture.md) | 架构说明：分层架构、数据流、技术栈、部署形态 |

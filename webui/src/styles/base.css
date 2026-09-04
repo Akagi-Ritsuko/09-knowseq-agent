@@ -142,7 +142,12 @@ body {
 
 /* ---- 页面容器与页头 ---- */
 .page {
-  max-width: 1080px;
+  max-width: 1680px;
+}
+
+/* 问答页：对话流保持阅读宽度（T-509 回归：最大化右侧空位与表格溢出修复） */
+.page-chat {
+  max-width: 920px;
 }
 
 .page-head {

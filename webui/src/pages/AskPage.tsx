@@ -299,7 +299,7 @@ export default function AskPage() {
   );
 
   return (
-    <section className="page">
+    <section className="page page-chat">
       <h1>问答</h1>
       {ready && (
         <div className="tabs" role="tablist">
