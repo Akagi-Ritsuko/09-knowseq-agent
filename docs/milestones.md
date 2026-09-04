@@ -51,10 +51,11 @@
 - **交付物**：FastAPI 后端 + React 前端（问答页、图谱页、知识库浏览、编译页、素材与采集控制、知识管理、设置页；webui/ 源码 → app/web/dist 构建托管）。
 - **验收**：浏览器打开本地地址完成"提问→带引用回答→跳转来源→查看图谱"闭环。
 
-## M5 桌面化 + 会议实时捕获 + Windows 集成完善 + 演示打磨 —— 规划就绪（2026-09-04，实施未开始）
+## M5 桌面化 + 会议实时捕获 + Windows 集成完善 + 演示打磨 —— 已完成（2026-09-04）
 
 > 已拆分详细需求与待办：见 [m5-requirements.md](m5-requirements.md)（REQ-501~509）与 [tasks.md](tasks.md)（T-501~509）。
 > 2026-09-04 规划扩展（经用户确认）：原"Windows 集成完善 + 演示打磨"扩展为四条主线——新增 **Tauri 桌面壳**（ADR-016，方案 A 壳加载本机 URL + 悬浮开始/结束控件 + sidecar 演进口子，修订 ADR-010）与**会议系统声音实时捕获**（ADR-017，WASAPI loopback 直采复用 asr_infer 转写，扩展 ADR-014）。前置：Rust 工具链（rustup + MSVC Build Tools）待安装。
+> 2026-09-04 收官：T-509 §11 五条验收全过（验收记录见 m5-requirements §9.1），顺带修复 brain 索引状态不一致缺陷（engine.py，见 §9.2）；真重启自启复核于收尾 commit 后执行。
 
 - **目标**：会议实时捕获（系统声音直采 + 悬浮控制）、桌面化（Tauri 壳方案 A + 关窗常驻）、Windows 集成完善（右键菜单/开机自启）、演示打磨（演示数据与脚本）。
 - **交付物**：`app/capture/system_audio_source.py`（pyaudiowpatch loopback 分段 → asr_infer 转写，meta 标记 system-audio）、`shell/` Tauri 2.x 壳（主窗加载 127.0.0.1:8765 + 悬浮控件窗口 + 关窗隐藏/单实例 + sidecar 口子）、webui `/floating` 路由、注册表右键菜单、开机自启（HKCU Run + 设置页开关）、演示数据与脚本。

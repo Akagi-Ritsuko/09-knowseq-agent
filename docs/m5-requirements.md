@@ -156,6 +156,31 @@ M5 四条主线：
 | 适配点 | 验收以真实桌面环境为准（真实会议声音/真实重启自启/真实右键操作）；验收中发现的问题回补对应 REQ 后复验 |
 | 验收 | §11 全部通过；changelog.md 留痕、tasks.md 状态更新、milestones.md M5 标记完成 |
 
+### §9.1 验收记录（2026-09-04 真实桌面执行）
+
+| §11 条目 | 结论 | 证据摘要 |
+|---|---|---|
+| 1 会议实时捕获主线 | **通过** | 真实会议音频（远望七号项目部署评审会）→ 悬浮「开始」→ 8 段自动落盘转写 + 1 段 stop 收尾段（`inbox/meeting/system_audio_20260904_194316~195117`，全部 `compiled: true`）→ 编译产出 `yuanwang-7`/`meeting-20260904` 系列知识条目 6+ 条 → 问答「远望七号项目部署评审会定了哪些决议？」返回决议四项（一期部署华东中心仓库十二台巡检机器人十二月二十日前验收/人工换电为主/一区五分钟响应/图像视频存一年），引用指向 `meeting-20260904-194741-seg004-resolution-summary.md`、`yuanwang-7-deployment-review-followup.md`、`yuanwang-7-deployment-review-meeting.md` |
+| 2 桌面化主线 | **通过** | 壳内控制台闭环（T-502）；关壳主窗 → 壳进程存活 + 后端 HTTP 200（后台常驻）；`Start-Process knowseq-shell.exe` 二次启动 5s 后进程数仍 1（单实例自退）；壳托盘唤出（T-503）；pystray 采集开关不受影响（T-507 验证记录）；悬浮窗按钮态 2s 轮询联动正确（采集中「开始」禁用⇄已停止「结束」禁用） |
+| 3 Windows 集成 | **通过** | 右键菜单真机全链路五项（T-506 验收记录）；开机自启 Run 键写入 + 等效开机执行验证（T-507），**真重启复核于本次 commit 后由用户执行重启、Agent 复核自启生效**（结果见 T-509 收尾补记） |
+| 4 口子就位 | **通过** | sidecar 三处口子（api.ts `VITE_API_BASE` / server.py Host-Origin 注释 / tauri.conf.json externalBin 注释）行为零变化（T-505 验收）；B 方案迁移路径 ADR-016 有据可查 |
+| 5 回归 | **通过** | 浏览器访问控制台正常；既有链路（六源采集/编译/大脑）无回退（本轮 `/api/status` 六源 running、编译与问答全链路走通）；Host/Origin 拦截（T-506/507 验收含 evil Host 403 回归） |
+
+### §9.2 验收中发现并修复的缺陷：brain 索引状态不一致（engine.py）
+
+- **现象**：e2e 问答与纯向量检索均未命中本轮会议产出的远望七号条目。
+- **定位**：LightRAG `kv_store_doc_status.json` 中 54 条 `parsing` 卡死（含本轮 meeting 条目与 T-508 时代历史条目），而 `index_state.json` 已将其入账 → 引擎认为「已索引」、LightRAG 侧实际未完成，增量重试永不触发。该缺陷自 T-508 时代已存在。
+- **根因**：`engine.index()` 的 `_run_safe(timeout=1800)` 超时吞异常返回 None，旧代码无条件把内容 sha 写入 index_state.json，造成「已入账但实际未索引」的状态不一致；且 1800s 对约 50 条文档的 `ainsert` 明显偏短（实测约 0.7 条/分钟）。
+- **代码修复**（`app/brain/engine.py`）：①`ainsert` 失败/超时（返回 None）时不得入账 state，返回体新增 `state_saved` 字段供调用方判断；②超时 1800→7200s。
+- **数据修复**（后端停止状态手术）：清除 doc_status 全部 54 条 parsing 记录；按「index_state 只应包含 processed 条目」不变量剔除 stale 条目至 70 条；重启后增量重插 49 条全部收敛（processed 131 / failed 87 全为 LightRAG 内部内容判重的 `dup-*` 无害记录 / 无中间态卡住）；二次增量返回 `{"scanned":122,"inserted":52,"skipped":70,"state_saved":true}`，state 122 条全量入账。
+- **经验**：LightRAG `wait_for` 超时只是不再等待，内部 pipeline 仍会继续跑完；`_run_safe` 吞异常的函数必须以返回值判断成败，不可默认成功。
+
+### §9.3 观察记录（中性，非缺陷）
+
+- 转写队列滞后 + stop 收尾竞态会多产出一个部分段（195117），内容为已捕获片段的超集，无损。
+- 低电平噪声段易触发英文幻觉（seg007）；loopback 采集本质是全系统声音，用户本机媒体音频会混入（seg005）——演示场景需注意播放内容。
+- 会议转写专有名词存在噪声（如「维府」「数据回旋」写法待确认），知识条目已如实标注待确认项，问答引用时亦会提示。
+
 ---
 
 ## §10 依赖与工具链枚举

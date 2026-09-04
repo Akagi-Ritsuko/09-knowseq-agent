@@ -276,17 +276,22 @@ class BrainEngine:
             state = self._load_state()
         to_insert = [(rel, text) for rel, text in docs
                      if state.get(rel) != _sha256(text)]
+        done = True
         if to_insert:
             rag = self._require_rag()
             texts = [t for _, t in to_insert]
             rels = [r for r, _ in to_insert]
-            self._run_safe(lambda: rag.ainsert(texts, ids=rels, file_paths=rels),
-                           timeout=1800)
-        for rel, text in to_insert:
-            state[rel] = _sha256(text)
-        self._save_state(state)
+            # ainsert 超时/失败（_run_safe 吞异常返回 None）时不得入账 state，
+            # 否则状态不一致（LightRAG 侧仍 parsing）且增量重试永不触发。
+            done = self._run_safe(
+                lambda: rag.ainsert(texts, ids=rels, file_paths=rels),
+                timeout=7200) is not None
+        if done:
+            for rel, text in to_insert:
+                state[rel] = _sha256(text)
+            self._save_state(state)
         return {"scanned": len(docs), "inserted": len(to_insert),
-                "skipped": len(docs) - len(to_insert)}
+                "skipped": len(docs) - len(to_insert), "state_saved": done}
 
     def remove(self, doc_id: str) -> dict:
         """删除大脑索引中指定 doc_id（REQ-409 索引一致性）。
