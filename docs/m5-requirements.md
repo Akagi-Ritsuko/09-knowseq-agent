@@ -67,6 +67,10 @@ M5 四条主线：
 | 适配点 | 后端零改动（D1）；壳不打包 dist、不管后端生命周期；前置 D2 Rust 工具链；开发态 `tauri dev`，产物 `tauri build`（NSIS/MSI，本里程碑仅自用不分发） |
 | 验收 | 壳窗口内完成「提问→带引用回答→跳转来源→查看图谱」闭环，与浏览器形态等价；后端未启动时壳内有明确提示；恶意 Host/Origin 仍 403（中间件行为不变） |
 
+> **验收记录（2026-09-04，T-502）**：验收三项全过（真机四场景）——①后端未启动有明确提示：壳启动加载 fallback 内置提示页（K logo + spinner），60s 截止后文案更新为「后端未就绪：请先启动 KnowSeq 后端（python run.py）。本窗口每 5 秒自动重试。」；②壳窗口内闭环与浏览器形态等价：后端启动后 ≤5s 重试周期内自动导航 `http://127.0.0.1:8765/`（location.replace）壳内渲染控制台（七入口 + 状态条「采集 6 源·编译·大脑 就绪」），提问「剪贴板采集有哪些坑？」→ ~30s 带内联引用回答（References 5 条 + 9 张引用卡）→ 点击引用卡 [2] 跳转 `/knowledge?path=lessons%2Fwin32-clipboard-handle-truncation.md` 条目详情完整（frontmatter/标签/关联/来源/正文）→ 图谱页 337 节点 · 544 关系壳内渲染正常；③恶意 Host/Origin 仍 403：`Host: evil.com` → 403、`Origin: http://evil.com` → 403（中间件行为不变）。`tauri build` 产物验证通过：NSIS `bundle/nsis/KnowSeq_0.1.0_x64-setup.exe` + MSI `bundle/msi/KnowSeq_0.1.0_x64_en-US.msi`。
+>
+> **偏差补记（2026-09-04，T-502 真机验收发现并修复）**：`probe_backend` 原用裸 `TcpStream::connect`（无连接超时），本机环境对无监听端口的 connect 会被安全软件代答 SYN-ACK（实测 ~2s 才返回、`Get-NetTCPConnection` 确认 8765 实无 LISTEN 进程），探测周期失真（每轮 ~3.3s、原 120 轮固定循环需 ~6.7 分钟才走到超时文案分支）。修复：`TcpStream::connect_timeout(800ms)` + 密集期改为 60s deadline 循环，60s 超时文案按预期出现。
+
 ## §3 REQ-503 桌面体验：关窗隐藏与防多实例（T-503）
 
 | 项 | 内容 |
@@ -95,6 +99,8 @@ M5 四条主线：
 | 验收 | 控制台全部请求行为与现状一致（回归：问答/图谱/采集/设置页正常）；代码检索可见三处口子注释；`VITE_API_BASE` 未设置时构建产物行为不变 |
 
 > **验收记录（2026-09-04，T-505）**：三处口子全部落地且互相指向 ADR-016 决策 4——①`webui/src/api.ts` `const API_BASE = import.meta.env.VITE_API_BASE ?? ''`（默认空串=相对路径，请求路径与现状一致）；②`app/web/server.py` Host/Origin 校验中间件处注释方案 B 迁移说明（WebView Origin 变为 `http://tauri.localhost` 时放行）；③`shell/src-tauri/tauri.conf.json` 占位骨架含 `externalBin` 注释位（PyInstaller 后端打包为 sidecar 子进程说明）。**行为零变化验证**：`npm run build` 通过（tsc + vite，新 bundle index-DAMhUBt-.js）+ `py_compile` server.py 通过 + `/` 托管新 bundle；浏览器回归四页全过——/ask（提问区/模式选择/状态栏）、/capture（六源卡片含系统声音「采集中·引擎就绪」、素材库）、/graph（337 节点 · 544 关系渲染 + 工具栏/图例）、/settings（六分组表单回显）；console 无当前 bundle 错误（历史累积日志均属旧构建与后端重启窗口期）。
+>
+> **偏差补记（2026-09-04，T-502 实施时发现）**：tauri-build（build.rs 阶段）以严格 serde_json 解析 `tauri.conf.json`，**不支持 JSONC 注释**，T-505 预留的「externalBin 注释位」无法以注释形式留在该文件。口子注释迁移至 `shell/src-tauri/README.md`（含完整启用步骤）与 `shell/src-tauri/src/main.rs` 头注，三处口子仍互相指向 ADR-016 决策 4、可检索性不变；`tauri.conf.json` 改为纯 JSON。
 
 ## §6 REQ-506 注册表右键菜单（T-506）
 

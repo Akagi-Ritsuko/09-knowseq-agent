@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>KnowSeq</title>
+    <style>
+      /* 内置提示页（REQ-502）：后端未就绪时不白屏；深色对齐控制台暗色风格 */
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { height: 100%; }
+      body {
+        display: flex; align-items: center; justify-content: center;
+        background: #16181f; color: #e8eaf2;
+        font-family: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+      }
+      .box { text-align: center; max-width: 480px; padding: 24px; }
+      .logo {
+        width: 64px; height: 64px; margin: 0 auto 20px;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 16px; background: #7c8cff; color: #16181f;
+        font-size: 34px; font-weight: 700;
+      }
+      h1 { font-size: 22px; margin-bottom: 10px; }
+      #probe-status { font-size: 14px; color: #9aa0b5; line-height: 1.7; }
+      .spinner {
+        width: 26px; height: 26px; margin: 22px auto 0;
+        border: 3px solid #2a2e3d; border-top-color: #7c8cff;
+        border-radius: 50%; animation: spin 0.9s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+  </head>
+  <body>
+    <div class="box">
+      <div class="logo">K</div>
+      <h1>KnowSeq</h1>
+      <p id="probe-status">正在连接 KnowSeq 后端…</p>
+      <div class="spinner"></div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "KnowSeq 壳默认权限：仅核心窗口能力；远程页面（http://127.0.0.1:8765）不在本 capability 的 remote 域内，无 Tauri IPC 权限。",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

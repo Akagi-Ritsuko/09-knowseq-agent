@@ -104,7 +104,7 @@
 | ID | 描述 | 关联 REQ | 关联 ADR | 覆盖规划级 | 状态 |
 |---|---|---|---|---|---|
 | T-501 | 系统声音捕获源：`system_audio_source.py`（pyaudiowpatch WASAPI loopback 分段 wav → 复用 asr_infer 转写 → inbox/meeting，meta 标记 system-audio；config 三项/停止收尾/设备切换重建/采集页开关卡片） | REQ-501 | ADR-017/014 | T-012 | done（2026-09-04） |
-| T-502 | Tauri 壳骨架：`shell/` 工程、主窗加载 127.0.0.1:8765、后端探测未就绪提示页（前置：rustup + MSVC Build Tools） | REQ-502 | ADR-016 | T-012 | todo |
+| T-502 | Tauri 壳骨架：`shell/` 工程、主窗加载 127.0.0.1:8765、后端探测未就绪提示页（前置：rustup + MSVC Build Tools） | REQ-502 | ADR-016 | T-012 | done（2026-09-04） |
 | T-503 | 桌面体验：关窗隐藏后台常驻、tauri-plugin-single-instance 防多实例、壳托盘（与 pystray 并存，职责分离） | REQ-503 | ADR-016 | T-012 | todo |
 | T-504 | 悬浮开始/结束控件：透明置顶无装饰小窗 + 拖拽、webui `/floating` 路由（Origin 本机过校验）、system_audio 启停联动 | REQ-504 | ADR-016/017 | T-012 | todo |
 | T-505 | sidecar 演进口子：api.ts `VITE_API_BASE` 前缀位、server.py Host/Origin 迁移注释、tauri.conf.json externalBin 注释位（行为零变化） | REQ-505 | ADR-016 | T-012 | done（2026-09-04） |
@@ -137,4 +137,5 @@
 4. **补 M1 遗留**：飞书凭据（app_id/app_secret）就绪后联调 T-106（T-004，REQ-106 验收前提）；T-113 待转写输出 JSON schema 确认后处置（若含 speaker/timestamp 字段则扩展 meeting 源 meta）。
 5. **M5 规划就绪（2026-09-04）**：规划扩展为「桌面化 + 会议实时捕获 + Windows 集成完善 + 演示打磨」——新建 ADR-016（Tauri 壳方案 A + 悬浮控件 + sidecar 口子，修订 ADR-010）与 ADR-017（WASAPI 系统声音捕获 pyaudiowpatch 复用 asr_infer，扩展 ADR-014），需求拆分见 m5-requirements.md（REQ-501~509 / T-501~509）。pyaudiowpatch 已引入（requirements.txt）。前置：安装 Rust 工具链（rustup + MSVC Build Tools）。
 6. **T-501 系统声音捕获源完成（2026-09-04，REQ-501 五条真机验收通过）**：`system_audio_source.py` WASAPI loopback 分段 wav → 复用 asr_infer 转写 → `inbox/meeting/`（meta 标记 system-audio）；静音哨兵流保 WASAPI 共享模式活跃、纯静音段峰值检测跳过（防 asr_infer 无输出误报）；停止收尾最后一段；include_mic 默认 false；设备切换重建捕获流；引擎未就绪 error 降级。
-7. **T-505 sidecar 演进口子完成（2026-09-04，REQ-505 验收通过、行为零变化）**：三条口子落地并互相指向 ADR-016 决策 4——api.ts `VITE_API_BASE` 前缀位（默认空串=相对路径）、server.py Host/Origin 校验处 tauri.localhost 放行迁移注释、shell/src-tauri/tauri.conf.json 占位骨架含 externalBin 注释位；构建通过 + 浏览器回归四页（问答/采集/图谱/设置）与现状一致。下一步：安装 Rust 工具链（rustup + MSVC Build Tools，系统级安装需用户确认）→ T-502 壳骨架。
+7. **T-505 sidecar 演进口子完成（2026-09-04，REQ-505 验收通过、行为零变化）**：三条口子落地并互相指向 ADR-016 决策 4——api.ts `VITE_API_BASE` 前缀位（默认空串=相对路径）、server.py Host/Origin 校验处 tauri.localhost 放行迁移注释、tauri.conf.json 占位骨架（externalBin 启用说明迁至 shell/src-tauri/README.md——tauri-build 不支持 JSONC 注释，见 m5-requirements §5 偏差补记）；构建通过 + 浏览器回归四页（问答/采集/图谱/设置）与现状一致。
+8. **T-502 Tauri 壳骨架完成（2026-09-04，REQ-502 四场景真机验收通过）**：`shell/` Tauri 2 壳（ADR-016 方案 A，后端零改动）——主窗先加载 fallback 内置提示页，后台线程裸 TCP `GET /api/status` 探测，就绪后 `location.replace` 自动导航控制台；60s 截止未就绪则更新提示文案，之后每 5s 低频重试。四场景验收：未就绪提示页 + 60s 超时文案、后端启动 ≤5s 自动导航壳内控制台、壳内闭环「提问→带引用回答→引用卡跳转来源→图谱 337 节点·544 关系」、恶意 Host/Origin 仍 403；`tauri build` 产物验证通过（NSIS `KnowSeq_0.1.0_x64-setup.exe` + MSI `KnowSeq_0.1.0_x64_en-US.msi`）。真机发现并修复 probe_backend 裸 connect 无超时 bug（本机安全软件对无监听端口代答 SYN-ACK 致阻塞 ~2s）→ `connect_timeout(800ms)` + 60s deadline 循环。下一步：T-503（关窗隐藏/单实例/壳托盘）→ T-504（悬浮控件）。
