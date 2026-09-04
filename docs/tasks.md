@@ -18,7 +18,8 @@
 | T-009 | M2-编译层：云端 LLM 提炼流水线（inbox→知识条目，移植 llm_wiki ingest 内核） | M2 / ADR-008 / ADR-015 | done | 2026-09-03 |
 | T-010 | M3-大脑层：LightRAG 接入（向量+图谱+引用溯源） | M3 / ADR-009 | done | 2026-09-03 |
 | T-011 | M4-交互层：FastAPI + React 前端（问答/图谱/控制/管理/设置，移植 llm_wiki 组件） | M4 / ADR-010 / ADR-015 | done | 2026-09-03 |
-| T-012 | M5-桌面化 + 会议实时捕获 + Windows 集成完善 + 演示打磨 | M5 / ADR-016 / ADR-017 | todo | |
+| T-012 | M5-桌面化 + 会议实时捕获 + Windows 集成完善 + 演示打磨 | M5 / ADR-016 / ADR-017 | done | 2026-09-04 |
+| T-013 | 论文撰写规划：大纲定稿（thesis/outline.md）+ 撰写任务 T-601~607 | 论文 / thesis | done | 2026-09-05 |
 
 ## M1 细分待办（实施顺序）
 
@@ -139,3 +140,19 @@
 6. **T-501 系统声音捕获源完成（2026-09-04，REQ-501 五条真机验收通过）**：`system_audio_source.py` WASAPI loopback 分段 wav → 复用 asr_infer 转写 → `inbox/meeting/`（meta 标记 system-audio）；静音哨兵流保 WASAPI 共享模式活跃、纯静音段峰值检测跳过（防 asr_infer 无输出误报）；停止收尾最后一段；include_mic 默认 false；设备切换重建捕获流；引擎未就绪 error 降级。
 7. **T-505 sidecar 演进口子完成（2026-09-04，REQ-505 验收通过、行为零变化）**：三条口子落地并互相指向 ADR-016 决策 4——api.ts `VITE_API_BASE` 前缀位（默认空串=相对路径）、server.py Host/Origin 校验处 tauri.localhost 放行迁移注释、tauri.conf.json 占位骨架（externalBin 启用说明迁至 shell/src-tauri/README.md——tauri-build 不支持 JSONC 注释，见 m5-requirements §5 偏差补记）；构建通过 + 浏览器回归四页（问答/采集/图谱/设置）与现状一致。
 8. **T-502 Tauri 壳骨架完成（2026-09-04，REQ-502 四场景真机验收通过）**：`shell/` Tauri 2 壳（ADR-016 方案 A，后端零改动）——主窗先加载 fallback 内置提示页，后台线程裸 TCP `GET /api/status` 探测，就绪后 `location.replace` 自动导航控制台；60s 截止未就绪则更新提示文案，之后每 5s 低频重试。四场景验收：未就绪提示页 + 60s 超时文案、后端启动 ≤5s 自动导航壳内控制台、壳内闭环「提问→带引用回答→引用卡跳转来源→图谱 337 节点·544 关系」、恶意 Host/Origin 仍 403；`tauri build` 产物验证通过（NSIS `KnowSeq_0.1.0_x64-setup.exe` + MSI `KnowSeq_0.1.0_x64_en-US.msi`）。真机发现并修复 probe_backend 裸 connect 无超时 bug（本机安全软件对无监听端口代答 SYN-ACK 致阻塞 ~2s）→ `connect_timeout(800ms)` + 60s deadline 循环。下一步：T-503（关窗隐藏/单实例/壳托盘）→ T-504（悬浮控件）。
+
+## 论文撰写（毕业论文，2026-09-05 启动）
+
+> 大纲唯一真相源：[../thesis/outline.md](../thesis/outline.md)。规划级任务 T-013（done，2026-09-05）由下列细分任务覆盖。纪律：每章完成即同步 changelog 留痕并本地 commit 一次（严禁 push）；量化数据须溯源；参考文献仅用已核实真实条目。
+
+| ID | 描述 | 产出 | 状态 | 完成日期 |
+|---|---|---|---|---|
+| T-601 | 第 1 章绪论（背景意义/研究现状/主要工作/组织结构）+ 第 2 章相关理论与技术（LLM/RAG+混合检索/LightRAG/KG 可视化/本地 ASR/WASAPI/FastAPI/React+sigma.js/Tauri） | thesis/ch01.md、thesis/ch02.md | todo | |
+| T-602 | 第 3 章系统需求分析（总体目标/功能需求/非功能需求/用例与数据流/范围边界） | thesis/ch03.md | todo | |
+| T-603 | 第 4 章系统总体设计（四层架构/关键决策权衡 ADR 对比/数据模型与存储/模块接口/技术栈与部署） | thesis/ch04.md | todo | |
+| T-604 | 第 5 章系统详细设计与实现（采集层/编译层/大脑层/交互层/Windows 集成与桌面壳，每节含真实代码片段） | thesis/ch05.md | todo | |
+| T-605 | 第 6 章系统测试与结果分析（测试环境/用例表 ≥20/关键指标/端到端演示案例/LightRAG 五模式对比实验实跑/缺陷修复案例） | thesis/ch06.md + 实验数据留档 | todo | |
+| T-606 | 第 7 章总结与展望 + 中英文摘要与关键词 + 参考文献（GB/T 7714，15~25 条） | thesis/ch07.md、abstract.md、references.md | todo | |
+| T-607 | 全文统稿：术语统一、`TODO-核实` 全部清零、README 文档导航增补 thesis/ 入口 | 全文定稿 | todo | |
+
+实施序：T-601 → T-602 → T-603 → T-604 → T-605 → T-606 → T-607。范围外：学校模板排版、查重盲审、演示截图实拍（论文以占位符标注）。
