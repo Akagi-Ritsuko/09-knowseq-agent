@@ -34,4 +34,5 @@ date: 2026-09-02
 - 关联任务：T-011
 - 相关 ADR：ADR-009（大脑层）、ADR-011（Windows 集成）
 - 修订：ADR-015（前端部分——"Vue3 或纯 HTML+CDN"改为 React 19 + Vite + TS 并移植 llm_wiki 组件，图谱选型落定 sigma.js 系；FastAPI 后端与页面范围不变）
+- 修订：ADR-016（交付形态——新增 Tauri 2.x 桌面壳承载 Web 控制台（WebView 加载本机 URL，FastAPI 后端不变）+ 桌面悬浮开始/结束控件；"Electron/Tauri 更重"备选结论按新需求更新，浏览器访问保留为后备形态）
 - 需求：FR-030、FR-031、FR-040、FR-041、FR-042

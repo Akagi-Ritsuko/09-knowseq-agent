@@ -50,5 +50,6 @@ ADR-003 曾决定用 screenpipe 采集"屏幕内容 + 系统音频"。落地调�
 - 关联里程碑：M1
 - 关联任务：T-002 / T-104 / T-113
 - 相关 ADR：ADR-002（采集流水线）、ADR-013（inbox 素材模型）
+- 修订：ADR-017（会议音频捕获源扩展——新增 WASAPI loopback 系统声音直采（pyaudiowpatch）分段 wav，复用本 ADR 的 asr_infer 转写链路与 drop 热文件夹路径；转写引擎不变）
 - 需求：FR-001
 - 参考：[VibeASR.cpp](https://github.com/microsoft/VibeASR.cpp)、[模型 HF](https://huggingface.co/microsoft/VibeVoice-ASR-BitNet)、[技术报告](https://arxiv.org/abs/2607.21075)

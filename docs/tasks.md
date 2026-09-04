@@ -18,7 +18,7 @@
 | T-009 | M2-编译层：云端 LLM 提炼流水线（inbox→知识条目，移植 llm_wiki ingest 内核） | M2 / ADR-008 / ADR-015 | done | 2026-09-03 |
 | T-010 | M3-大脑层：LightRAG 接入（向量+图谱+引用溯源） | M3 / ADR-009 | done | 2026-09-03 |
 | T-011 | M4-交互层：FastAPI + React 前端（问答/图谱/控制/管理/设置，移植 llm_wiki 组件） | M4 / ADR-010 / ADR-015 | done | 2026-09-03 |
-| T-012 | M5-Windows 集成完善 + 演示打磨 | M5 / ADR-011 | todo | |
+| T-012 | M5-桌面化 + 会议实时捕获 + Windows 集成完善 + 演示打磨 | M5 / ADR-016 / ADR-017 | todo | |
 
 ## M1 细分待办（实施顺序）
 
@@ -97,6 +97,22 @@
 | T-410 | 设置页 FR-042：LLM API/embedding/监听目录/采集/编译/大脑配置节（后端扩展 settings：brain 节 + llm_api_key 只写不回读），持久化重启生效 | REQ-410 | — | T-011 | done（2026-09-03） |
 | T-411 | 端到端验收（「提问→带引用回答→跳转来源→查看图谱」闭环 + 能力覆盖不回退）+ 旧 static 下线 + 文档同步 | REQ-411 / §13 | — | M4 收尾 | done（2026-09-03） |
 
+## M5 细分待办（实施顺序）
+
+> 详细需求见 [m5-requirements.md](m5-requirements.md)（REQ-501~509）。规划级任务 T-012 由下列细分任务覆盖。前置决策：壳方案 A 零后端改动（D1）；Rust 工具链前置（D2）；sidecar 口子三条（D3）；WASAPI 直采（D4）；壳与 pystray 并存（D5）；自启对象=后端服务（D6）。建议实施序：T-501（不依赖 Rust）→ T-505 → 装 Rust 工具链 → T-502 → T-503/T-504 → T-506/T-507 → T-508 → T-509。
+
+| ID | 描述 | 关联 REQ | 关联 ADR | 覆盖规划级 | 状态 |
+|---|---|---|---|---|---|
+| T-501 | 系统声音捕获源：`system_audio_source.py`（pyaudiowpatch WASAPI loopback 分段 wav → 复用 asr_infer 转写 → inbox/meeting，meta 标记 system-audio；config 三项/停止收尾/设备切换重建/采集页开关卡片） | REQ-501 | ADR-017/014 | T-012 | todo |
+| T-502 | Tauri 壳骨架：`shell/` 工程、主窗加载 127.0.0.1:8765、后端探测未就绪提示页（前置：rustup + MSVC Build Tools） | REQ-502 | ADR-016 | T-012 | todo |
+| T-503 | 桌面体验：关窗隐藏后台常驻、tauri-plugin-single-instance 防多实例、壳托盘（与 pystray 并存，职责分离） | REQ-503 | ADR-016 | T-012 | todo |
+| T-504 | 悬浮开始/结束控件：透明置顶无装饰小窗 + 拖拽、webui `/floating` 路由（Origin 本机过校验）、system_audio 启停联动 | REQ-504 | ADR-016/017 | T-012 | todo |
+| T-505 | sidecar 演进口子：api.ts `VITE_API_BASE` 前缀位、server.py Host/Origin 迁移注释、tauri.conf.json externalBin 注释位（行为零变化） | REQ-505 | ADR-016 | T-012 | todo |
+| T-506 | 注册表右键菜单：HKCU Directory\shell「纳入采集/立即结束」+ file_dirs 追加端点 + 设置页安装/卸载 | REQ-506 | ADR-011 | T-012 | todo |
+| T-507 | 开机自启：`app.autostart` + HKCU Run 键 + 设置页开关（自启对象=run.py 后端，不含壳；与 web.auto_start 区分） | REQ-507 | ADR-011 | T-012 | todo |
+| T-508 | 演示数据与演示脚本：`scripts/demo/` 全链路演示（采集→编译→问答/图谱）+ 清理模式 | REQ-508 | — | T-012 | todo |
+| T-509 | M5 端到端验收（m5-requirements §11 清单）+ 文档同步（changelog/tasks/milestones，M5 关闭） | REQ-509 / §11 | — | M5 收尾 | todo |
+
 ## M2/M4 移植待办（llm_wiki → KnowSeq，ADR-015）
 
 > 依据 ADR-015：编译层移植 nashsu/llm_wiki（GPL v3）ingest 内核到 Python，展示层升级 React 并直接移植其组件，插件参考其 MV3 扩展。参考源码本地化于 `reference/llm_wiki`（.gitignore 已排除，仅个人自用不分发）。移植文件头部注明 `Ported from nashsu/llm_wiki (GPL-3.0)`。
@@ -119,3 +135,4 @@
 2. **M3 大脑层完成（2026-09-03，T-306 端到端验收 19/19 通过，M3 关闭）**：LightRAG（lightrag-hku 1.5.7）对 knowledge/ 建向量索引+知识图谱+引用溯源——BrainEngine 同步门面（内部专用事件循环线程）、索引增量幂等（rel doc_id+内容哈希）、语义检索（naive）、带引用问答（hybrid 等）、图谱导出（nodes/edges JSON）、brain API 5 端点 + 控制台大脑面板。**embedding 用本地模型**（bge-small-zh-v1.5，ModelScope 下载到 models/embed/，sentence-transformers CPU）——用户无 embedding API，全本地向量化；问答/实体抽取复用云端 dsv4flash。真实验收：语义检索命中剪贴板条目、问答带引用、31 节点图谱。
 3. **M4 交互层完成（2026-09-03，T-411 端到端验收通过，M4 关闭，T-011/T-115 done）**：React 化前端七页全量落地（问答/图谱/知识库/编译/素材/采集控制/设置，细分 T-401~411 全 done）；图谱 sigma.js 系（ADR-010 修订版/ADR-015）；真实环境闭环走查「提问→带引用回答→跳转来源→查看图谱」通过（337 节点/544 关系）；旧 app/web/static/ 已删除，dist 托管 + SPA fallback + 前端 404 页兜底，旧路径不可达；需求拆分见 m4-requirements.md（REQ-401~411）。
 4. **补 M1 遗留**：飞书凭据（app_id/app_secret）就绪后联调 T-106（T-004，REQ-106 验收前提）；T-113 待转写输出 JSON schema 确认后处置（若含 speaker/timestamp 字段则扩展 meeting 源 meta）。
+5. **M5 规划就绪（2026-09-04）**：规划扩展为「桌面化 + 会议实时捕获 + Windows 集成完善 + 演示打磨」——新建 ADR-016（Tauri 壳方案 A + 悬浮控件 + sidecar 口子，修订 ADR-010）与 ADR-017（WASAPI 系统声音捕获 pyaudiowpatch 复用 asr_infer，扩展 ADR-014），需求拆分见 m5-requirements.md（REQ-501~509 / T-501~509）。前置：安装 Rust 工具链（rustup + MSVC Build Tools）；pyaudiowpatch 待引入依赖。
