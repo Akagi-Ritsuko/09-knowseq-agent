@@ -41,6 +41,10 @@ sources:
     enabled: true
     engine_path: tools/vibeasr/build/bin/asr_infer.exe
     model_dir: models/vibeasr
+  system_audio:
+    enabled: true
+    segment_seconds: 300
+    include_mic: false
   clipboard:
     enabled: true
     interval: 2

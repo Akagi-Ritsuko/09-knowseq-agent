@@ -56,6 +56,8 @@ M5 四条主线：
 | 适配点 | 转写完全复用 meeting_source 的 asr_infer 子进程调用（引擎/模型未就绪 → 状态 error 降级，同 ADR-014 模式）；loopback 只含扬声器输出（不含自己麦克风声音）；默认输出设备切换（蓝牙耳机回连）时重建捕获流；控制台采集页加该源开关卡片；分段/静音检测参数参考 Meetily（Reference: Zackriya-Solutions/meetily (MIT)） |
 | 验收 | 播放一段系统声音（会议录音/视频）→ 开始捕获 → 结束后 `inbox/meeting/` 产出转写稿且 meta 含 `system-audio` 标记；分段按配置落盘依序转写；停止收尾最后一段；include_mic=false 时无自己麦克风声音；引擎未就绪时 error 提示不影响其他源 |
 
+> **验收记录（2026-09-04，T-501）**：五条全过——TTS 播放系统声音 → `inbox/meeting/` 产出 3 个转写稿（meta 均含 `capture: system-audio` 及 audio/duration_sec/engine/model_dir，内容与 TTS 文本吻合）；分段依序落盘转写（seg003→004→005 时间戳严格递增）；停止收尾最后一段（22.3s 不足满段立即落稿）；include_mic=false 无麦克风杂音；引擎未就绪 error 降级（提示含 ADR-014 构建指引，不影响其他源）。实现要点：静音哨兵流保 WASAPI 共享模式活跃（无活跃 render 流时 loopback read 阻塞）；纯静音段峰值检测跳过转写（防 asr_infer 无输出误报）。
+
 ## §2 REQ-502 Tauri 壳骨架（T-502）
 
 | 项 | 内容 |

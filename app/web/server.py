@@ -60,6 +60,7 @@ class SettingsReq(BaseModel):
     web_port: int | None = None
     auto_start: bool | None = None
     meeting_enabled: bool | None = None
+    system_audio_enabled: bool | None = None
     clipboard_enabled: bool | None = None
     feishu_enabled: bool | None = None
     file_enabled: bool | None = None
@@ -232,6 +233,7 @@ def create_app(config, inbox, manager, compile_mgr=None, brain_mgr=None) -> Fast
             "auto_start": config.get("web.auto_start", True),
             "sources": {
                 "meeting": config.get("sources.meeting.enabled", False),
+                "system_audio": config.get("sources.system_audio.enabled", False),
                 "clipboard": config.get("sources.clipboard.enabled", True),
                 "feishu": config.get("sources.feishu.enabled", False),
                 "file": config.get("sources.file.enabled", True),
@@ -275,6 +277,7 @@ def create_app(config, inbox, manager, compile_mgr=None, brain_mgr=None) -> Fast
             config.set("web.auto_start", bool(req.auto_start))
         for key, val in {
             "meeting": req.meeting_enabled,
+            "system_audio": req.system_audio_enabled,
             "clipboard": req.clipboard_enabled,
             "feishu": req.feishu_enabled,
             "file": req.file_enabled,

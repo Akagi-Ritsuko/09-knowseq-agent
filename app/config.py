@@ -51,6 +51,13 @@ DEFAULTS: dict = {
             "engine_path": "tools/vibeasr/build/bin/asr_infer.exe",
             "model_dir": "models/vibeasr",
         },
+        # 系统声音捕获（T-501 REQ-501 / ADR-017）：WASAPI loopback 直采，
+        # 复用 meeting 引擎转写，产物写 inbox/meeting/（meta.capture=system-audio）
+        "system_audio": {
+            "enabled": False,
+            "segment_seconds": 300,  # 定长分段（秒）
+            "include_mic": False,    # 是否混入默认麦克风
+        },
         "clipboard": {"enabled": True, "interval": 2, "max_len": 50000},
         "feishu": {"enabled": False},
         "file": {"enabled": True, "dirs": []},

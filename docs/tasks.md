@@ -103,7 +103,7 @@
 
 | ID | 描述 | 关联 REQ | 关联 ADR | 覆盖规划级 | 状态 |
 |---|---|---|---|---|---|
-| T-501 | 系统声音捕获源：`system_audio_source.py`（pyaudiowpatch WASAPI loopback 分段 wav → 复用 asr_infer 转写 → inbox/meeting，meta 标记 system-audio；config 三项/停止收尾/设备切换重建/采集页开关卡片） | REQ-501 | ADR-017/014 | T-012 | todo |
+| T-501 | 系统声音捕获源：`system_audio_source.py`（pyaudiowpatch WASAPI loopback 分段 wav → 复用 asr_infer 转写 → inbox/meeting，meta 标记 system-audio；config 三项/停止收尾/设备切换重建/采集页开关卡片） | REQ-501 | ADR-017/014 | T-012 | done（2026-09-04） |
 | T-502 | Tauri 壳骨架：`shell/` 工程、主窗加载 127.0.0.1:8765、后端探测未就绪提示页（前置：rustup + MSVC Build Tools） | REQ-502 | ADR-016 | T-012 | todo |
 | T-503 | 桌面体验：关窗隐藏后台常驻、tauri-plugin-single-instance 防多实例、壳托盘（与 pystray 并存，职责分离） | REQ-503 | ADR-016 | T-012 | todo |
 | T-504 | 悬浮开始/结束控件：透明置顶无装饰小窗 + 拖拽、webui `/floating` 路由（Origin 本机过校验）、system_audio 启停联动 | REQ-504 | ADR-016/017 | T-012 | todo |
@@ -135,4 +135,5 @@
 2. **M3 大脑层完成（2026-09-03，T-306 端到端验收 19/19 通过，M3 关闭）**：LightRAG（lightrag-hku 1.5.7）对 knowledge/ 建向量索引+知识图谱+引用溯源——BrainEngine 同步门面（内部专用事件循环线程）、索引增量幂等（rel doc_id+内容哈希）、语义检索（naive）、带引用问答（hybrid 等）、图谱导出（nodes/edges JSON）、brain API 5 端点 + 控制台大脑面板。**embedding 用本地模型**（bge-small-zh-v1.5，ModelScope 下载到 models/embed/，sentence-transformers CPU）——用户无 embedding API，全本地向量化；问答/实体抽取复用云端 dsv4flash。真实验收：语义检索命中剪贴板条目、问答带引用、31 节点图谱。
 3. **M4 交互层完成（2026-09-03，T-411 端到端验收通过，M4 关闭，T-011/T-115 done）**：React 化前端七页全量落地（问答/图谱/知识库/编译/素材/采集控制/设置，细分 T-401~411 全 done）；图谱 sigma.js 系（ADR-010 修订版/ADR-015）；真实环境闭环走查「提问→带引用回答→跳转来源→查看图谱」通过（337 节点/544 关系）；旧 app/web/static/ 已删除，dist 托管 + SPA fallback + 前端 404 页兜底，旧路径不可达；需求拆分见 m4-requirements.md（REQ-401~411）。
 4. **补 M1 遗留**：飞书凭据（app_id/app_secret）就绪后联调 T-106（T-004，REQ-106 验收前提）；T-113 待转写输出 JSON schema 确认后处置（若含 speaker/timestamp 字段则扩展 meeting 源 meta）。
-5. **M5 规划就绪（2026-09-04）**：规划扩展为「桌面化 + 会议实时捕获 + Windows 集成完善 + 演示打磨」——新建 ADR-016（Tauri 壳方案 A + 悬浮控件 + sidecar 口子，修订 ADR-010）与 ADR-017（WASAPI 系统声音捕获 pyaudiowpatch 复用 asr_infer，扩展 ADR-014），需求拆分见 m5-requirements.md（REQ-501~509 / T-501~509）。前置：安装 Rust 工具链（rustup + MSVC Build Tools）；pyaudiowpatch 待引入依赖。
+5. **M5 规划就绪（2026-09-04）**：规划扩展为「桌面化 + 会议实时捕获 + Windows 集成完善 + 演示打磨」——新建 ADR-016（Tauri 壳方案 A + 悬浮控件 + sidecar 口子，修订 ADR-010）与 ADR-017（WASAPI 系统声音捕获 pyaudiowpatch 复用 asr_infer，扩展 ADR-014），需求拆分见 m5-requirements.md（REQ-501~509 / T-501~509）。pyaudiowpatch 已引入（requirements.txt）。前置：安装 Rust 工具链（rustup + MSVC Build Tools）。
+6. **T-501 系统声音捕获源完成（2026-09-04，REQ-501 五条真机验收通过）**：`system_audio_source.py` WASAPI loopback 分段 wav → 复用 asr_infer 转写 → `inbox/meeting/`（meta 标记 system-audio）；静音哨兵流保 WASAPI 共享模式活跃、纯静音段峰值检测跳过（防 asr_infer 无输出误报）；停止收尾最后一段；include_mic 默认 false；设备切换重建捕获流；引擎未就绪 error 降级。下一步：T-505 sidecar 口子 → 装 Rust 工具链 → T-502。

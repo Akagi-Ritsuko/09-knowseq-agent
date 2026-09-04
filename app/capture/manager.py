@@ -7,6 +7,7 @@ from .clipboard_source import ClipboardSource
 from .feishu_source import FeishuSource
 from .file_source import FileSource
 from .meeting_source import MeetingSource
+from .system_audio_source import SystemAudioSource
 from .web_source import WebSource
 
 
@@ -14,6 +15,7 @@ class CaptureManager:
     def __init__(self, config, inbox):
         self.sources: list[CaptureSource] = [
             MeetingSource(config, inbox),
+            SystemAudioSource(config, inbox),  # T-501 REQ-501 系统声音捕获
             ClipboardSource(config, inbox),
             FeishuSource(config, inbox),
             FileSource(config, inbox),

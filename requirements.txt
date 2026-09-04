@@ -13,6 +13,10 @@ python-multipart>=0.0.9   # FastAPI 文件上传（/api/import/file）必需
 # M3 大脑层（REQ-301 / ADR-009）：LightRAG 向量索引 + 知识图谱 + 引用溯源
 lightrag-hku>=1.5         # 唯一 M3 新增依赖；embedding/LLM 走 OpenAI 兼容云端
 
+# M5 系统声音捕获（T-501 REQ-501 / ADR-017）：WASAPI loopback 直采 + 可选麦克风混音
+pyaudiowpatch>=0.2.12    # PyAudio 分支，支持 WASAPI loopback（Windows）
+numpy>=1.26              # include_mic 混音重采样（include_mic=false 时不触发音频路径）
+
 # 可选依赖（缺失时对应采集源降级为 error/stopped，不影响整体）
 # 会议音频转写（REQ-104 / ADR-014）：VibeASR.cpp 引擎 + VibeVoice-ASR-BitNet gguf 模型
 # 为外部可选组件（本地构建 + 子进程调用，Windows 需 MinGW-w64），不进 Python 依赖；

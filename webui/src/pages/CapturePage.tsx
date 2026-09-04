@@ -9,6 +9,10 @@ import { useStatus } from '../status/StatusContext';
 
 const SOURCE_META: Record<string, { label: string; sub: string }> = {
   meeting: { label: '会议转写', sub: '热文件夹音频 → VibeASR.cpp 转写' },
+  system_audio: {
+    label: '系统声音',
+    sub: 'WASAPI loopback 直采系统声音（可含麦克风）→ 定长分段转写',
+  },
   clipboard: { label: '剪贴板', sub: '复制的文本自动入库' },
   feishu: { label: '飞书', sub: '云文档导入（需配置凭据）' },
   file: { label: '文件', sub: '监听目录新增文本文件' },
@@ -209,7 +213,8 @@ export default function CapturePage() {
                   >
                     {STATUS_LABEL[s.status] ?? s.status}
                   </span>
-                  {s.name === 'meeting' && meeting.engine_ready !== undefined && (
+                  {(s.name === 'meeting' || s.name === 'system_audio') &&
+                    meeting.engine_ready !== undefined && (
                     <span
                       className={`chip chip-sm ${meeting.engine_ready ? 'chip-ok' : 'chip-warn'}`}
                       title={meeting.engine_hint || ''}
