@@ -140,6 +140,7 @@
 6. **T-501 系统声音捕获源完成（2026-09-04，REQ-501 五条真机验收通过）**：`system_audio_source.py` WASAPI loopback 分段 wav → 复用 asr_infer 转写 → `inbox/meeting/`（meta 标记 system-audio）；静音哨兵流保 WASAPI 共享模式活跃、纯静音段峰值检测跳过（防 asr_infer 无输出误报）；停止收尾最后一段；include_mic 默认 false；设备切换重建捕获流；引擎未就绪 error 降级。
 7. **T-505 sidecar 演进口子完成（2026-09-04，REQ-505 验收通过、行为零变化）**：三条口子落地并互相指向 ADR-016 决策 4——api.ts `VITE_API_BASE` 前缀位（默认空串=相对路径）、server.py Host/Origin 校验处 tauri.localhost 放行迁移注释、tauri.conf.json 占位骨架（externalBin 启用说明迁至 shell/src-tauri/README.md——tauri-build 不支持 JSONC 注释，见 m5-requirements §5 偏差补记）；构建通过 + 浏览器回归四页（问答/采集/图谱/设置）与现状一致。
 8. **T-502 Tauri 壳骨架完成（2026-09-04，REQ-502 四场景真机验收通过）**：`shell/` Tauri 2 壳（ADR-016 方案 A，后端零改动）——主窗先加载 fallback 内置提示页，后台线程裸 TCP `GET /api/status` 探测，就绪后 `location.replace` 自动导航控制台；60s 截止未就绪则更新提示文案，之后每 5s 低频重试。四场景验收：未就绪提示页 + 60s 超时文案、后端启动 ≤5s 自动导航壳内控制台、壳内闭环「提问→带引用回答→引用卡跳转来源→图谱 337 节点·544 关系」、恶意 Host/Origin 仍 403；`tauri build` 产物验证通过（NSIS `KnowSeq_0.1.0_x64-setup.exe` + MSI `KnowSeq_0.1.0_x64_en-US.msi`）。真机发现并修复 probe_backend 裸 connect 无超时 bug（本机安全软件对无监听端口代答 SYN-ACK 致阻塞 ~2s）→ `connect_timeout(800ms)` + 60s deadline 循环。下一步：T-503（关窗隐藏/单实例/壳托盘）→ T-504（悬浮控件）。
+9. **控制台体验增强完成（2026-09-05，用户浏览器走查反馈，覆盖 T-407/T-213/T-404 增量）**：①图谱节点→来源条目跳转——`/api/brain/graph` 节点新增 `sources`（LightRAG source_id 多值反解 chunk_id → knowledge rel 路径，上限 8），图谱详情面板「来源条目」点击跳知识库条目；顺带修复类型图例数百条遮挡搜索弹层 UI bug（前 12 + 40vh 滚动）。②编译队列任务明细与重试/取消/删除——`GET /api/compile/queue` + `POST /api/compile/retry|cancel|remove` 四端点，编译页四计数可点击展开对应明细（素材路径/重试次数/错误信息），failed/cancelled 供重试+删除、pending/processing 供取消；queue.py 新增 `remove()`（彻底出队，区别于 cancel 的标记保留语义）。详见 changelog 2026-09-05 行。
 
 ## 论文撰写（毕业论文，2026-09-05 启动）
 
@@ -150,7 +151,7 @@
 | T-601 | 第 1 章绪论（背景意义/研究现状/主要工作/组织结构）+ 第 2 章相关理论与技术（LLM/RAG+混合检索/LightRAG/KG 可视化/本地 ASR/WASAPI/FastAPI/React+sigma.js/Tauri） | thesis/ch01.md、thesis/ch02.md | done | 2026-09-05 |
 | T-602 | 第 3 章系统需求分析（总体目标/功能需求/非功能需求/用例与数据流/范围边界） | thesis/ch03.md | done | 2026-09-05 |
 | T-603 | 第 4 章系统总体设计（四层架构/关键决策权衡 ADR 对比/数据模型与存储/模块接口/技术栈与部署） | thesis/ch04.md | done | 2026-09-05 |
-| T-604 | 第 5 章系统详细设计与实现（采集层/编译层/大脑层/交互层/Windows 集成与桌面壳，每节含真实代码片段） | thesis/ch05.md | todo | |
+| T-604 | 第 5 章系统详细设计与实现（采集层/编译层/大脑层/交互层/Windows 集成与桌面壳，每节含真实代码片段） | thesis/ch05.md | done | 2026-09-05 |
 | T-605 | 第 6 章系统测试与结果分析（测试环境/用例表 ≥20/关键指标/端到端演示案例/LightRAG 五模式对比实验实跑/缺陷修复案例） | thesis/ch06.md + 实验数据留档 | todo | |
 | T-606 | 第 7 章总结与展望 + 中英文摘要与关键词 + 参考文献（GB/T 7714，15~25 条） | thesis/ch07.md、abstract.md、references.md | todo | |
 | T-607 | 全文统稿：术语统一、`TODO-核实` 全部清零、README 文档导航增补 thesis/ 入口 | 全文定稿 | todo | |
