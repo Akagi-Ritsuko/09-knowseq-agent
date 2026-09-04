@@ -143,6 +143,10 @@ M5 四条主线：
 | 适配点 | 不污染真实数据：演示素材带统一 meta 标记，脚本提供清理模式（演示产物可一键移除，含 inbox/knowledge/索引清理）；LLM/转写依赖沿用现有 config（引擎未就绪时跳过会议环节并提示） |
 | 验收 | 全新环境按 README 步骤跑演示脚本全链路走通（采集→编译→问答带引用→图谱）；清理模式运行后数据回到演示前状态 |
 
+> **验收记录（2026-09-04，T-508）**：①`py_compile` 两脚本通过；②`run_demo.py` 全链路走通（运行中后端 127.0.0.1:8765，基线 materials=37/graph 337 节点）：前置三项检查 → 4 份种子经 `Inbox.write_material` 注入（`meta={demo:true, seed:文件名}`，标题带【演示】前缀，dedup=False 可重复运行）→ 编译队列清空 → 知识条目产出（第一轮 14 条/第二轮 17 条，concepts/lessons/queries/decisions/connections 五类，条目 `sources` 与演示素材 rel 交集可精确识别）→ 大脑索引 `POST /api/brain/index`（rebuild=false，第二轮：扫描 107/新增 20/跳过 87）→ 图谱 585 节点/1038 关系 → 问答冒烟「为什么选 LoRa」回答 525 字、带引用（首条 `decisions/smart-greenhouse-d2026-001-communication.md`）；③`cleanup_demo.py` 清理归零：后端在线前置 + 编译队列空闲守卫 → 4 素材 unlink → 17 条目经 `DELETE /api/knowledge` 三合一删除（文件 + index.md 重建 + brain.remove，逐条 `brain_removed=True`）→ 复核残留素材/条目均为 0；④素材/条目/索引.md 全部回到演示前状态。
+>
+> **偏差补记（2026-09-04，T-508）**：①**首验暴露两处脚本缺陷并已修复**——`/api/brain/index` 服务端内部超时 1800s（engine.py ainsert timeout）大于客户端 1500s 导致 socket `TimeoutError`（不经 URLError 包装）未捕获直接崩溃，客户端超时改 1900s 并在 `_http` 捕获 `TimeoutError`；`inbox.list_materials` 返回 Windows 反斜杠路径而条目 frontmatter `sources` 为 posix 格式，交集恒空导致清理「0 条目」，rel 统一 `as_posix()` 修复。修复后第二轮全链路 + 清理完整走通。②**graph 节点数不回落基线 337**：a) 演示触发的索引为 scope=all 全量扫描，顺带把 58 条历史未索引条目补入大脑（本应存在的数据，非演示产物）；b) LightRAG `adelete_by_doc_id` 删除文档 chunk 与独占实体，多文档共享/合并实体不删，清理后残留 7 个演示相关实体标签（D-2026-001/LoRa/NB-IoT 等），知识文件与条目已删净——共享实体残留属 LightRAG 合并机制预期行为，如需彻底归零可大脑重建（破坏性，不作为清理默认）。③materials 39 vs 基线 37：演示期间运行中的采集源正常捕获 2 条新素材（无 demo 标记，正确不清理）。④脚本「队列失败任务」提示为 queue 累计历史计数（21 条为 M4 以来积累），本轮 4 条演示素材全部编译成功。⑤首轮编译触发 9 条（含 5 条历史未编译素材）产出的历史条目属编译管线正常行为。
+
 ## §9 REQ-509 端到端验收与文档同步（T-509）
 
 | 项 | 内容 |

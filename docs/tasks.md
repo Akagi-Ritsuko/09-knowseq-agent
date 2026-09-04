@@ -110,7 +110,7 @@
 | T-505 | sidecar 演进口子：api.ts `VITE_API_BASE` 前缀位、server.py Host/Origin 迁移注释、tauri.conf.json externalBin 注释位（行为零变化） | REQ-505 | ADR-016 | T-012 | done（2026-09-04） |
 | T-506 | 注册表右键菜单：HKCU Directory\shell「纳入采集/立即结束」+ file_dirs 追加端点 + 设置页安装/卸载 | REQ-506 | ADR-011 | T-012 | done（2026-09-04） |
 | T-507 | 开机自启：`app.autostart` + HKCU Run 键 + 设置页开关（自启对象=run.py 后端，不含壳；与 web.auto_start 区分） | REQ-507 | ADR-011 | T-012 | done（2026-09-04） |
-| T-508 | 演示数据与演示脚本：`scripts/demo/` 全链路演示（采集→编译→问答/图谱）+ 清理模式 | REQ-508 | — | T-012 | todo |
+| T-508 | 演示数据与演示脚本：`scripts/demo/` 全链路演示（采集→编译→问答/图谱）+ 清理模式 | REQ-508 | — | T-012 | done（2026-09-04） |
 | T-509 | M5 端到端验收（m5-requirements §11 清单）+ 文档同步（changelog/tasks/milestones，M5 关闭） | REQ-509 / §11 | — | M5 收尾 | todo |
 
 ## M2/M4 移植待办（llm_wiki → KnowSeq，ADR-015）
