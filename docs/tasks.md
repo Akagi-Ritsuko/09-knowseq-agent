@@ -20,6 +20,7 @@
 | T-011 | M4-交互层：FastAPI + React 前端（问答/图谱/控制/管理/设置，移植 llm_wiki 组件） | M4 / ADR-010 / ADR-015 | done | 2026-09-03 |
 | T-012 | M5-桌面化 + 会议实时捕获 + Windows 集成完善 + 演示打磨 | M5 / ADR-016 / ADR-017 | done | 2026-09-04 |
 | T-013 | 论文撰写规划：大纲定稿（thesis/outline.md）+ 撰写任务 T-601~607 | 论文 / thesis | done | 2026-09-05 |
+| T-014 | 竞赛申报材料：演示 PPT 大纲与逐页内容（16 页四要素+截图占位+数据溯源表，`.trae/documents/competition-ppt-outline.md`，git 忽略；阶段二 PPTX 生成待用户确认大纲后另行启动） | 竞赛 / 论文衍生 | done | 2026-09-07 |
 
 ## M1 细分待办（实施顺序）
 
