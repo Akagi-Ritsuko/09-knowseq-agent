@@ -94,6 +94,10 @@ class CompileTriggerReq(BaseModel):
     path: str | None = None     # scope=path 时的 inbox 相对路径
 
 
+class CompileTaskReq(BaseModel):
+    id: str                     # 队列任务 id（/api/compile/queue 返回）
+
+
 class ReviewResolveReq(BaseModel):
     id: str
     note: str | None = None
@@ -401,6 +405,37 @@ def create_app(config, inbox, manager, compile_mgr=None, brain_mgr=None) -> Fast
             return {"ok": True, "scope": "path",
                     "triggered": compile_mgr.trigger_path(req.path or "")}
         return {"ok": True, "scope": "all", "triggered": compile_mgr.trigger_all()}
+
+    @app.get("/api/compile/queue")
+    def compile_queue():
+        """队列任务明细（T-404）：前端点击状态数字展开查看。"""
+        _require_compile()
+        return {"tasks": compile_mgr.queue.snapshot()}
+
+    @app.post("/api/compile/retry")
+    def compile_retry(req: CompileTaskReq):
+        _require_compile()
+        if not compile_mgr.queue.retry(req.id):
+            raise HTTPException(status_code=404,
+                                detail=f"任务不存在或状态不可重试：{req.id}")
+        return {"ok": True}
+
+    @app.post("/api/compile/cancel")
+    def compile_cancel(req: CompileTaskReq):
+        _require_compile()
+        if not compile_mgr.queue.cancel(req.id):
+            raise HTTPException(status_code=404,
+                                detail=f"任务不存在或已取消：{req.id}")
+        return {"ok": True}
+
+    @app.post("/api/compile/remove")
+    def compile_remove(req: CompileTaskReq):
+        """删除队列任务：彻底出队，不再展示也不再重试。"""
+        _require_compile()
+        if not compile_mgr.queue.remove(req.id):
+            raise HTTPException(status_code=404,
+                                detail=f"任务不存在：{req.id}")
+        return {"ok": True}
 
     @app.get("/api/compile/reviews")
     def compile_reviews():

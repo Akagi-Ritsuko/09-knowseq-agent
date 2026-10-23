@@ -1,13 +1,15 @@
 /**
  * 图谱页（T-407 / REQ-407 / FR-031）。
- * brain 图谱 JSON → graphology → sigma.js v3 渲染：ForceAtlas2 布局（≥220 节点走 Web
+ * 大脑知识图谱 JSON → graphology → sigma.js v3 渲染：ForceAtlas2 布局（≥220 节点走 Web
  * Worker）、点击/悬停高亮（点击聚焦 1.5x 邻居、其余 dimmed）、缩放控件、详情面板
- * （label/type/度数/关联边）、Louvain 社区着色与 type 着色切换、搜索定位。
- * LightRAG 节点 id 为实体名，不对应 knowledge 文件路径，不做条目跳转。
+ * （label/type/度数/关联边/来源条目）、Louvain 社区着色与 type 着色切换、搜索定位。
+ * LightRAG 节点 id 为实体名；来源条目由后端从节点 source_id（chunk 引用）反解
+ * rel 路径（sources 字段），详情面板可跳转知识库条目。
  * Ported from nashsu/llm_wiki (GPL-3.0)：graph-view.tsx 的 SigmaContainer 子组件模式
  * （GraphLoader / GraphRenderSettings / EventHandler）与高亮 reducer、hover canvas 渲染。
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import type Graph from 'graphology';
 import forceAtlas2 from 'graphology-layout-forceatlas2';
 import {
@@ -456,6 +458,7 @@ export default function GraphPage() {
       degree: graphData.degree.get(selected) ?? 0,
       community: (attrs.community as number) ?? 0,
       neighbors: graphData.neighborsOf.get(selected) ?? [],
+      sources: (attrs.sources as string[] | undefined) ?? [],
     };
   }, [graphData, selected]);
 
@@ -492,7 +495,10 @@ export default function GraphPage() {
   const legend = useMemo(() => {
     if (!data) return [];
     if (colorMode === 'type') {
-      return typeLegend(data.nodes).map((t) => ({ label: `${t.type} ×${t.count}`, color: nodeColor(t.type) }));
+      // LightRAG 下 type≈实体名，条目可达数百；只取前 12，避免图例盖住搜索弹层
+      return typeLegend(data.nodes)
+        .slice(0, 12)
+        .map((t) => ({ label: `${t.type} ×${t.count}`, color: nodeColor(t.type) }));
     }
     if (!graphData) return [];
     const counts = new Map<number, number>();
@@ -685,6 +691,21 @@ export default function GraphPage() {
                   </button>
                 ))}
               </div>
+              {detail.sources.length > 0 && (
+                <div className="gd-sources">
+                  <p className="gd-hint">来源条目</p>
+                  {detail.sources.map((src) => (
+                    <Link
+                      key={src}
+                      className="gd-link"
+                      to={`/knowledge?path=${encodeURIComponent(src)}`}
+                      title={src}
+                    >
+                      <span className="gd-nlabel">{src}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </aside>
           )}
         </div>

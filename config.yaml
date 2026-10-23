@@ -2,7 +2,7 @@ web:
   port: 8765
   auto_start: true
 app:
-  autostart: true
+  autostart: false
 paths:
   inbox_dir: inbox
   drop_dir: drop
@@ -40,21 +40,21 @@ brain:
     model: ''
 sources:
   meeting:
-    enabled: true
+    enabled: false
     engine_path: tools/vibeasr/build/bin/asr_infer.exe
     model_dir: models/vibeasr
   system_audio:
-    enabled: true
+    enabled: false
     segment_seconds: 300
     include_mic: false
   clipboard:
-    enabled: true
+    enabled: false
     interval: 2
     max_len: 50000
   feishu:
-    enabled: true
+    enabled: false
   file:
-    enabled: true
+    enabled: false
     dirs: []
   web:
-    enabled: true
+    enabled: false

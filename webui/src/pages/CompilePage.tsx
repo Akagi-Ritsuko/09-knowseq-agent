@@ -49,6 +49,19 @@ interface TriggerResult {
   triggered: number;
 }
 
+/** /api/compile/queue 单条任务（CompileTask.to_dict） */
+interface QueueTask {
+  id: string;
+  source_path: string;
+  status: string; // pending | processing | failed | cancelled
+  added_at: number;
+  retry_count: number;
+  error: string | null;
+}
+
+/** 可点击展开的状态键（completed 为会话内存计数器，无明细） */
+type QueueFilter = 'pending' | 'processing' | 'failed' | 'completed';
+
 type ToolKey = 'lint' | 'dedup' | 'enrich-dry' | 'enrich-run';
 
 /** Review 列表轮询节奏与全局状态轮询对齐 */
@@ -74,6 +87,11 @@ export default function CompilePage() {
   const [dedupResult, setDedupResult] = useState<DedupResult | null>(null);
   const [enrichResult, setEnrichResult] = useState<EnrichResult | null>(null);
 
+  // ---- 队列明细（点击状态数字展开，T-404） ----
+  const [expanded, setExpanded] = useState<QueueFilter | null>(null);
+  const [tasks, setTasks] = useState<QueueTask[] | null>(null);
+  const [tasksErr, setTasksErr] = useState<string | null>(null);
+
   /** 互斥执行标记：触发 / 工具 / 解决按钮共享，防止并发操作 */
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -87,11 +105,92 @@ export default function CompilePage() {
     }
   }, []);
 
+  const loadTasks = useCallback(async () => {
+    try {
+      const r = await api<{ tasks: QueueTask[] }>('/api/compile/queue');
+      setTasks(r.tasks);
+      setTasksErr(null);
+    } catch (e) {
+      setTasksErr(e instanceof Error ? e.message : String(e));
+    }
+  }, []);
+
   useEffect(() => {
     void loadReviews();
     const t = setInterval(() => void loadReviews(), REVIEWS_POLL_MS);
     return () => clearInterval(t);
   }, [loadReviews]);
+
+  // 展开期间按 5s 轮询刷新明细；completed 仅为计数器无明细
+  useEffect(() => {
+    if (!expanded || expanded === 'completed') return;
+    void loadTasks();
+    const t = setInterval(() => void loadTasks(), REVIEWS_POLL_MS);
+    return () => clearInterval(t);
+  }, [expanded, loadTasks]);
+
+  async function taskAction(kind: 'retry' | 'cancel' | 'remove', id: string) {
+    setBusy(`${kind}:${id}`);
+    setTasksErr(null);
+    try {
+      await api(`/api/compile/${kind}`, { method: 'POST', body: JSON.stringify({ id }) });
+      await loadTasks();
+      void refresh();
+    } catch (e) {
+      setTasksErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  // ---- 状态统计（点击展开对应队列明细） ----
+  const queueStats: Array<{
+    key: QueueFilter;
+    label: string;
+    en: string;
+    num: number;
+    err?: boolean;
+    hint: string;
+  }> = c
+    ? [
+        {
+          key: 'pending',
+          label: '待处理',
+          en: 'pending',
+          num: c.queue.pending,
+          hint: '已入队等待编译的素材（扫描到 compiled: false 自动入队）',
+        },
+        {
+          key: 'processing',
+          label: '处理中',
+          en: 'processing',
+          num: c.queue.processing,
+          hint: '正在运行编译管线；服务重启后自动回到待处理',
+        },
+        {
+          key: 'failed',
+          label: '失败',
+          en: 'failed',
+          num: c.queue.failed,
+          err: c.queue.failed > 0,
+          hint: '重试 3 次仍失败，保留在队列直到重试成功或取消',
+        },
+        {
+          key: 'completed',
+          label: '完成',
+          en: 'completed',
+          num: c.queue.completed,
+          hint: '本次运行的成功计数；任务成功即出队，无明细',
+        },
+      ]
+    : [];
+
+  /** 当前展开视图下的任务：failed 视图合并展示 cancelled（均需手动处理） */
+  const visible = (tasks ?? []).filter((t) =>
+    expanded === 'failed'
+      ? t.status === 'failed' || t.status === 'cancelled'
+      : expanded !== null && t.status === expanded,
+  );
 
   async function trigger(scope: 'all' | 'path') {
     setBusy(scope);
@@ -218,25 +317,91 @@ export default function CompilePage() {
               {c.queue.paused && <span className="chip chip-err">限流暂停</span>}
             </div>
             <div className="stats">
-              <div className="stat">
-                <span className="stat-num">待处理 {c.queue.pending}</span>
-                <span className="stat-label">pending</span>
-              </div>
-              <div className="stat">
-                <span className="stat-num">处理中 {c.queue.processing}</span>
-                <span className="stat-label">processing</span>
-              </div>
-              <div className="stat">
-                <span className={`stat-num${c.queue.failed > 0 ? ' err' : ''}`}>
-                  失败 {c.queue.failed}
-                </span>
-                <span className="stat-label">failed</span>
-              </div>
-              <div className="stat">
-                <span className="stat-num">完成 {c.queue.completed}</span>
-                <span className="stat-label">completed</span>
-              </div>
+              {queueStats.map((s) => (
+                <button
+                  key={s.key}
+                  type="button"
+                  className={`stat stat-btn${expanded === s.key ? ' open' : ''}`}
+                  title={s.hint}
+                  aria-pressed={expanded === s.key}
+                  onClick={() => setExpanded((p) => (p === s.key ? null : s.key))}
+                >
+                  <span className={`stat-num${s.err ? ' err' : ''}`}>
+                    {s.label} {s.num}
+                  </span>
+                  <span className="stat-label">{s.en}</span>
+                </button>
+              ))}
             </div>
+            {expanded && (
+              <div className="queue-detail">
+                {expanded === 'completed' ? (
+                  <p className="msg">
+                    完成数是本次服务运行期间的成功计数；任务成功后即从队列移除，因此没有明细可查。
+                    产出的知识条目可在「知识」页查看。
+                  </p>
+                ) : (
+                  <>
+                    <p className="stat-label">队列明细（{visible.length}）</p>
+                    {tasksErr && <p className="msg msg-err">队列明细获取失败：{tasksErr}</p>}
+                    {tasks === null && !tasksErr ? (
+                      <span className="skeleton" style={{ width: '40%' }} />
+                    ) : visible.length === 0 ? (
+                      <p className="msg">该状态暂无任务</p>
+                    ) : (
+                      <ul className="queue-list">
+                        {visible.map((t) => (
+                          <li key={t.id} className="queue-item">
+                            <div className="queue-item-head">
+                              <span className="path">{t.source_path}</span>
+                              <span className="queue-item-meta">
+                                {t.status === 'cancelled' && (
+                                  <span className="chip chip-off">已取消</span>
+                                )}
+                                {t.retry_count > 0 && (
+                                  <span className="chip chip-warn">已重试 {t.retry_count}</span>
+                                )}
+                                {t.status === 'failed' || t.status === 'cancelled' ? (
+                                  <>
+                                    <button
+                                      type="button"
+                                      className="btn btn-ghost btn-sm"
+                                      disabled={busy !== null}
+                                      onClick={() => void taskAction('retry', t.id)}
+                                    >
+                                      {busy === `retry:${t.id}` ? '重试中…' : '重试'}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="btn btn-ghost btn-sm"
+                                      disabled={busy !== null}
+                                      title="从队列彻底移除：不再展示也不再重试"
+                                      onClick={() => void taskAction('remove', t.id)}
+                                    >
+                                      {busy === `remove:${t.id}` ? '删除中…' : '删除'}
+                                    </button>
+                                  </>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="btn btn-ghost btn-sm"
+                                    disabled={busy !== null}
+                                    onClick={() => void taskAction('cancel', t.id)}
+                                  >
+                                    {busy === `cancel:${t.id}` ? '取消中…' : '取消'}
+                                  </button>
+                                )}
+                              </span>
+                            </div>
+                            {t.error && <p className="queue-error">{t.error}</p>}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
             {c.last_error && <p className="msg msg-err">上次错误：{c.last_error}</p>}
             {c.last_warnings.length > 0 && (
               <p className="msg msg-warn">警告：{c.last_warnings.join('；')}</p>

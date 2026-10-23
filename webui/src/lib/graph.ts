@@ -14,6 +14,8 @@ export interface BrainNode {
   id: string;
   label: string;
   type: string;
+  /** 来源 knowledge 条目相对路径（LightRAG source_id 反解，图谱页跳转用） */
+  sources?: string[];
 }
 
 export interface BrainEdge {
@@ -169,6 +171,7 @@ export function buildGraph(data: BrainGraph, colorMode: 'type' | 'community'): G
       label: node.label || node.id,
       nodeType: node.type,
       community: 0,
+      sources: node.sources ?? [],
     });
     degree.set(node.id, 0);
     neighborsOf.set(node.id, []);

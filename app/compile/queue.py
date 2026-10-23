@@ -227,6 +227,32 @@ class CompileQueue:
             self._cv.notify_all()
             return True
 
+    def remove(self, task_id: str) -> bool:
+        """删除任务：从队列彻底移除，不再展示也不再重试。
+
+        与 cancel（任务保留为 cancelled、可复活重跑）不同，remove 立即出队。
+        若任务仍在 processing，通过取消事件让 in-flight 运行自行退出，
+        其后续 complete/fail 因任务已不存在而无效果。
+        注意：若素材文件仍在 inbox 且未编译，下轮自动扫描会重新入队。
+        """
+        with self._cv:
+            task = self._find_locked(task_id)
+            if not task:
+                return False
+            if task.status == "processing":
+                event = self._runs.pop(task_id, None)
+                if event:
+                    event.set()
+            self._tasks.remove(task)
+            if not self._tasks:
+                self._completed = 0  # 队列清空即重置计数（与 complete 一致）
+            if not any(t.status in ("pending", "processing") for t in self._tasks):
+                self._paused = False
+                self._resume_at = None
+            self._save_locked()
+            self._cv.notify_all()
+            return True
+
     # ---- 暂停/恢复 ----
     def _pause_locked(self, seconds: float | None, message: str | None = None) -> None:
         """暂停并中止全部 in-flight（回 pending）。调用方必须已持有 _cv。"""

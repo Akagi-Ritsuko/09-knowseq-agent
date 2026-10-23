@@ -362,6 +362,8 @@ class BrainEngine:
         return {"answer": answer, "contexts": contexts, "mode": mode}
 
     # ── REQ-305 图谱导出 ────────────────────────────────────────
+    MAX_SOURCES_PER_NODE = 8
+
     def graph(self, max_nodes: int = 500) -> dict:
         rag = self._require_rag()
         labels = self._run_safe(rag.get_graph_labels, timeout=120)
@@ -379,12 +381,33 @@ class BrainEngine:
                 continue
             for n in kg.nodes or []:
                 nodes[n.id] = {"id": n.id, "label": n.id,
-                               "type": (n.labels or ["entity"])[0]}
+                               "type": (n.labels or ["entity"])[0],
+                               "sources": self._node_sources(n)}
             for e in kg.edges or []:
                 key = (e.source, e.target, e.type)
                 edges.setdefault(key, {"source": e.source, "target": e.target,
                                        "relation": e.type})
         return {"nodes": list(nodes.values()), "edges": list(edges.values())}
+
+    def _node_sources(self, node: object) -> list[str]:
+        """实体 → 来源 knowledge 相对路径列表。
+
+        LightRAG 节点 properties.source_id 为 <SEP> 分隔的 chunk 引用
+        （``{rel}-chunk-NN``，索引时以 rel 作为 doc id），反解出 rel 路径
+        供图谱页跳转知识库条目；file_path 已被规范化为 basename，不可用。
+        """
+        props = getattr(node, "properties", None) or {}
+        raw = str(props.get("source_id") or "")
+        if not raw:
+            return []
+        out: list[str] = []
+        for part in raw.split(_GRAPH_FIELD_SEP):
+            rel = _rel_from_chunk_id(part)
+            if rel and rel not in out:
+                out.append(rel)
+                if len(out) >= self.MAX_SOURCES_PER_NODE:
+                    break
+        return out
 
     # ── 结果解析（容错：LightRAG 返回含顶层 data 嵌套，1.5.7 兼容）──
     @staticmethod
@@ -409,6 +432,10 @@ class BrainEngine:
 
 
 _CHUNK_ID_TAIL = re.compile(r"-chunk-\d+$")
+
+# LightRAG 实体/关系 source_id 的多值分隔符（lightrag.constants.GRAPH_FIELD_SEP，
+# 本地常量避免依赖 lightrag 导入成功）
+_GRAPH_FIELD_SEP = "<SEP>"
 
 
 def _rel_from_chunk_id(chunk_id: object) -> str:
